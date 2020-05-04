@@ -1,0 +1,11 @@
+Debug/
+dll/
+lib/
+res/resOld/
+res/blenderFiles
+x64/
+assimp-vc141-mt.dll
+assimp-vc141-mtd.dll
+dna.txt
+glad.c
+resource.h

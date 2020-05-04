@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="External Librarys">
+      <UniqueIdentifier>{a25d9940-9404-498f-bf72-1e0e9155a894}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\3D Entities">
+      <UniqueIdentifier>{1010e4cb-9762-4a56-8a07-1d33482bdfd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\3D Entities">
+      <UniqueIdentifier>{c6b29650-292c-4cad-aec3-1fcd418cbc22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\3D Entities\Mesh">
+      <UniqueIdentifier>{5ab2e670-bbdc-4b07-86fb-f3598ca40139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\3D Entities\Mesh">
+      <UniqueIdentifier>{2404d71e-88d6-4b73-ace2-d2edb4109148}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\3D Entities\Mesh\Modifiers">
+      <UniqueIdentifier>{e9ff911b-666f-4395-af5f-3a6b8643c240}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\3D Entities\Mesh\Modifiers">
+      <UniqueIdentifier>{4c91f7ba-a4dd-462f-97a8-ebd6ca442fc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\Material">
+      <UniqueIdentifier>{65af294d-d46d-49ab-a7c8-584542147f65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\Material">
+      <UniqueIdentifier>{890e28e8-d3d1-47e4-bb7c-2b40ebac7e3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\Physics">
+      <UniqueIdentifier>{85938abe-5802-4bf2-af3e-fd749d6c986b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\Physics">
+      <UniqueIdentifier>{c0d9a714-8b63-42f3-90fa-56b6c908b0ae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="InputHandler.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Quelldateien\3D Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Quelldateien\3D Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform3D.cpp">
+      <Filter>Quelldateien\3D Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="TriangleModel.cpp">
+      <Filter>Quelldateien\3D Entities\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelModifier.cpp">
+      <Filter>Quelldateien\3D Entities\Mesh\Modifiers</Filter>
+    </ClCompile>
+    <ClCompile Include="ModifierVertexGroup.cpp">
+      <Filter>Quelldateien\3D Entities\Mesh\Modifiers</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Quelldateien\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialManager.cpp">
+      <Filter>Quelldateien\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="PolygonModel.cpp">
+      <Filter>Quelldateien\3D Entities\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>Quelldateien\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Colliders.cpp">
+      <Filter>Quelldateien\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Rigidbody.cpp">
+      <Filter>Quelldateien\Physics</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Shader.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="InputHandler.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Headerdateien\3D Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Headerdateien\3D Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform3D.h">
+      <Filter>Headerdateien\3D Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="TriangleModel.h">
+      <Filter>Headerdateien\3D Entities\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelModifier.h">
+      <Filter>Headerdateien\3D Entities\Mesh\Modifiers</Filter>
+    </ClInclude>
+    <ClInclude Include="ModifierVertexGroup.h">
+      <Filter>Headerdateien\3D Entities\Mesh\Modifiers</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Headerdateien\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialManager.h">
+      <Filter>Headerdateien\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="PolygonModel.h">
+      <Filter>Headerdateien\3D Entities\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>Headerdateien\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Colliders.h">
+      <Filter>Headerdateien\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Rigidbody.h">
+      <Filter>Headerdateien\Physics</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ClothSimulationProject.rc">
+      <Filter>Ressourcendateien</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
