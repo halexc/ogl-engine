@@ -1,20 +1,78 @@
 #include "Rigidbody.h"
 
+
+void Rigidbody::update(double delta)
+{
+	// Update position and rotation:
+	translateGlobal(float(delta) * speedLinear);
+	rotateGlobal(float(delta) * glm::length(speedAngular), speedAngular);
+
+	// Iterate through all active forces and apply them
+	std::vector<ContinuousForce>::iterator it = continuousForces.begin();
+	while (it != continuousForces.end()) {
+		float time = fmin(delta, it->timeRemaining);
+
+		// Apply Force for future calculations:
+		applyForce(it->force * time, it->leverage);
+
+		// Retrospectively update the transform, assuming linear acceleration (a/2 * t^2):
+		translateGlobal(0.5f * it->force * time * time);
+		glm::fvec3 angular = 0.5f * glm::cross(it->force, it->leverage) * time * time;
+		rotateGlobal(glm::length(angular), angular);
+
+		it->timeRemaining -= time;
+		if (it->timeRemaining <= 0.0f) {
+			it = continuousForces.erase(it);
+		}
+		else it++;
+	}
+}
+
 void Rigidbody::applyAcceleration(glm::fvec3 acc)
 {
-	momentumLinear += acc;
+	speedLinear += acc;
+}
+
+void Rigidbody::applyAccelerationOverTime(glm::fvec3 acc, double time)
+{
+	ContinuousForce force = ContinuousForce();
+	force.force = mass * acc;
+	force.leverage = glm::fvec3(0.0f, 0.0f, 0.0f);
+	continuousForces.push_back(force);
 }
 
 void Rigidbody::applyAngularAcceleration(glm::fvec3 acc)
 {
-	momentumAngular += acc;
+	speedAngular += acc;
 }
+
+void Rigidbody::applyAngularAccelerationOverTime(glm::fvec3 acc, double time)
+{
+	ContinuousForce force = ContinuousForce();
+	force.force = inertiaTensor * acc / 2.0f;
+	force.leverage = glm::fvec3(1.0f, 0.0f, 0.0f);
+	force.timeRemaining = time;
+	continuousForces.push_back(force);
+	force.force = -force.force;
+	force.leverage = glm::fvec3(-1.0f, 0.0f, 0.0f);
+	continuousForces.push_back(force);
+}
+
 
 void Rigidbody::applyForce(glm::fvec3 F, glm::fvec3 leverage)
 {
 	applyAcceleration((1 / mass) * F);
 	glm::fvec3 torque = glm::cross(F, leverage);
 	applyAngularAcceleration(glm::inverse(inertiaTensor) * torque);
+}
+
+void Rigidbody::applyForceOverTime(glm::fvec3 F, double time, glm::fvec3 leverage)
+{
+	ContinuousForce force = ContinuousForce();
+	force.force = F;
+	force.leverage = leverage;
+	force.timeRemaining = time;
+	continuousForces.push_back(force);
 }
 
 void Rigidbody::generateInertiaTensor(char type, float width_or_radius, float height, float depth_or_cutout, float mass)

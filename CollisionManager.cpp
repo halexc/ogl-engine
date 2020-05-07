@@ -7,28 +7,33 @@ float CollisionManager::sign(float f) {
 	return -1.0f + 2.0f * (f >= 0);
 }
 
-bool CollisionManager::checkCollision(Sphere A, Sphere B, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Sphere A, Sphere B, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	// Are the objects in the same collision layer?
 	if (!(A.layer & B.layer)) return false;
+	if (!(A.still || B.still)) return false;
 
 	// Sphere collision: Are the objects less than their combined radii apart?
 	float d = glm::length(B.center - A.center);
 	if (d <= A.radius + B.radius) {
+		glm::fvec3 dir = glm::normalize(B.center - A.center);
 		if (outHit) {
-			glm::fvec3 dir = glm::normalize(B.center - A.center);
 			float dIntFromA = A.radius - (A.radius + B.radius - d) / 2;
 			*outHit = A.center + dIntFromA * dir;
+		}
+		if (outNormal) {
+			*outNormal = dir;
 		}
 		return true;
 	}
 	return false;
 }
 
-bool CollisionManager::checkCollision(Sphere sphere, Plane plane, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Sphere sphere, Plane plane, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	// Are the objects in the same collision layer?
 	if (!(sphere.layer & plane.layer)) return false;
+	if (!(sphere.still || plane.still)) return false;
 
 	// Sphere-Plane collision: Is the distance to the center of the circle from the plane less than the radius?
 	float d = glm::dot(sphere.center, plane.normal) - plane.d;
@@ -36,15 +41,19 @@ bool CollisionManager::checkCollision(Sphere sphere, Plane plane, glm::fvec3 * o
 		if (outHit) {
 			*outHit = sphere.center - d * plane.normal;
 		}
+		if (outNormal) {
+			*outNormal = plane.normal;
+		}
 		return true;
 	}
 	return false;
 }
 
-bool CollisionManager::checkCollision(Sphere sphere, BoundingBox box, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Sphere sphere, BoundingBox box, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	// Are the objects in the same collision layer?
 	if (!(sphere.layer & box.layer)) return false;
+	if (!(sphere.still || box.still)) return false;
 
 	// Is the distance too large anyway?
 	if (glm::length(box.transform.getPosition() - sphere.center) > glm::length(glm::fvec3(box.width, box.height, box.depth)) + sphere.radius) return false;
@@ -58,45 +67,53 @@ bool CollisionManager::checkCollision(Sphere sphere, BoundingBox box, glm::fvec3
 	aabox.height = box.height;
 	aabox.depth = box.depth;
 
-	bool res = checkCollision(sphere, aabox, outHit);
+	bool res = checkCollision(sphere, aabox, outHit, outNormal);
 	if (outHit) {
 		*outHit = glm::fvec3(box.transform.getTransform() * glm::fvec4(*outHit, 1.0f));
 	}
+	if (outNormal) {
+		*outNormal = glm::fvec3(box.transform.getTransform() * glm::fvec4(*outNormal, 1.0f));
+	}
+	
 	return res;
 }
 
-bool CollisionManager::checkCollision(Sphere sphere, AABoundingBox aabox, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Sphere sphere, AABoundingBox aabox, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	// Are the objects in the same collision layer?
 	if (!(sphere.layer & aabox.layer)) return false;
+	if (!(sphere.still || aabox.still)) return false;
 
 	// Calculate the distance from the sphere's center to the edge of the bounding box:
-	float deltaX = aabox.position.x - sphere.center.x;
-	float deltaY = aabox.position.y - sphere.center.y;
-	float deltaZ = aabox.position.z - sphere.center.z;
-	deltaX -= sign(deltaX) * aabox.width / 2;
-	deltaY -= sign(deltaY) * aabox.height / 2;
-	deltaZ -= sign(deltaZ) * aabox.depth / 2;
+	float deltaX = sphere.center.x - aabox.position.x;
+	float deltaY = sphere.center.y - aabox.position.y;
+	float deltaZ = sphere.center.z - aabox.position.z;
+	deltaX -= sign(deltaX) * fminf(aabox.width / 2, fabsf(deltaX));
+	deltaY -= sign(deltaY) * fminf(aabox.height / 2, fabsf(deltaX));
+	deltaZ -= sign(deltaZ) * fminf(aabox.depth / 2, fabsf(deltaX));
 	glm::fvec3 delta = glm::fvec3(deltaX, deltaY, deltaZ);
 
 	// Is that distance less than the sphere's radius?
 	if (glm::length(delta) <= sphere.radius) {
 		if (outHit) {
-			*outHit = sphere.center + delta;
+			*outHit = sphere.center - delta;
+		}
+		if (outNormal) {
+			glm::fvec3 normal = glm::fvec3(fmaxf(0.0f, 1.0f - fabsf(deltaX)), fmaxf(0.0f, 1.0f - fabsf(deltaY)), fmaxf(0.0f, 1.0f - fabsf(deltaZ)));
+			if (normal == glm::fvec3(0.0f, 0.0f, 0.0f)) normal = glm::fvec3(1.0f, 0.0f, 0.0f);
+			normal = glm::normalize(normal);
+			*outNormal = normal;
 		}
 		return true;
 	}
 	return false;
 }
 
-bool CollisionManager::checkCollision(Sphere sphere, Triangle tri, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Sphere sphere, Triangle tri, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	// Are the objects in the same collision layer?
 	if (!(sphere.layer & tri.layer)) return false;
-
-	glm::fvec3 v0c = sphere.center - tri.v0;
-	glm::fvec3 v1c = sphere.center - tri.v1;
-	glm::fvec3 v2c = sphere.center - tri.v2;
+	if (!(sphere.still || tri.still)) return false;
 
 	// Raycast along all triangle edges:
 	int hits = 0;
@@ -121,15 +138,15 @@ bool CollisionManager::checkCollision(Sphere sphere, Triangle tri, glm::fvec3 * 
 	ray = Ray(tri.v1, tri.v2 - tri.v1);
 	if (ray.intersectsSphere(sphere, &hit1, &hit2)) {
 		if (glm::length(hit1 - ray.getOrigin()) <= edgeLength) {
+			hits++;
 			if (outHit) {
 				if (hit1 == hit2) {
-					*outHit = *outHit * float(hits) + hit1;
-					hits++;
+					*outHit = *outHit * float(hits - 1) + hit1;
 					*outHit = *outHit / float(hits);
 				}
 				else {
-					*outHit = *outHit * float(hits) + hit1 + hit2;
-					hits += 2;
+					*outHit = *outHit * float(hits - 1) + hit1 + hit2;
+					hits++;
 					*outHit = *outHit / float(hits);
 				}
 			}
@@ -138,32 +155,37 @@ bool CollisionManager::checkCollision(Sphere sphere, Triangle tri, glm::fvec3 * 
 	ray = Ray(tri.v2, tri.v0 - tri.v2);
 	if (ray.intersectsSphere(sphere, &hit1, &hit2)) {
 		if (glm::length(hit1 - ray.getOrigin()) <= edgeLength) {
+			hits++;
 			if (outHit) {
 				if (hit1 == hit2) {
-					*outHit = *outHit * float(hits) + hit1;
-					hits++;
+					*outHit = *outHit * float(hits - 1) + hit1;
 					*outHit = *outHit / float(hits);
 				}
 				else {
-					*outHit = *outHit * float(hits) + hit1 + hit2;
-					hits += 2;
+					*outHit = *outHit * float(hits - 1) + hit1 + hit2;
+					hits++;
 					*outHit = *outHit / float(hits);
 				}
 			}
 		}
 	}
+	if (outNormal) {
+		if(tri.ccw) *outNormal = glm::normalize(glm::cross(tri.v0 - tri.v1, tri.v2 - tri.v1));
+		else *outNormal = glm::normalize(glm::cross(tri.v2 - tri.v1, tri.v1 - tri.v1));
+	}
 	return (hits > 0);
 }
 
-bool CollisionManager::checkCollision(Plane plane, Sphere sphere, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Plane plane, Sphere sphere, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
-	return checkCollision(sphere, plane, outHit);
+	return checkCollision(sphere, plane, outHit, outNormal);
 }
 
-bool CollisionManager::checkCollision(Plane A, Plane B, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Plane A, Plane B, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	// Are the objects in the same collision layer?
 	if (!(A.layer & B.layer)) return false;
+	if (!(A.still || B.still)) return false;
 
 	// Are the planes not parallel?
 	if (A.normal != B.normal && A.normal != -B.normal) {
@@ -184,19 +206,22 @@ bool CollisionManager::checkCollision(Plane A, Plane B, glm::fvec3 * outHit)
 				*outHit = glm::fvec3(0, 0, d / (B.normal.z - A.normal.z));
 			}
 		}
+		if (outNormal) *outNormal = A.normal;
 		return true;
 	}
 	if ((A.normal == B.normal && A.d == B.d) || (A.normal == -B.normal && A.d == -B.d)) {
 		if (outHit) *outHit = A.d * A.normal;
+		if (outNormal) *outNormal = A.normal;
 		return true;
 	}
 	return false;
 }
 
-bool CollisionManager::checkCollision(Plane plane, BoundingBox box, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Plane plane, BoundingBox box, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	// Are the objects in the same collision layer?
 	if (!(plane.layer & box.layer)) return false;
+	if (!(plane.still || box.still)) return false;
 
 	// Iterate through all corners to find the closest to the 
 	glm::fvec3 corners[8];
@@ -260,12 +285,18 @@ bool CollisionManager::checkCollision(Plane plane, BoundingBox box, glm::fvec3 *
 			}
 		}
 	}
-
+	if (outNormal) {
+		*outNormal = plane.normal;
+	}
 	return true;
 }
 
-bool CollisionManager::checkCollision(Plane plane, AABoundingBox aabox, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Plane plane, AABoundingBox aabox, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
+	// Are the objects in the same collision layer?
+	if (!(plane.layer & aabox.layer)) return false;
+	if (!(plane.still || aabox.still)) return false;
+
 	// Iterate through all corners to find the closest to the 
 	glm::fvec3 corners[8];
 	bool rightSide[8];
@@ -326,12 +357,18 @@ bool CollisionManager::checkCollision(Plane plane, AABoundingBox aabox, glm::fve
 			}
 		}
 	}
-
+	if (outNormal) {
+		*outNormal = plane.normal;
+	}
 	return true;
 }
 
-bool CollisionManager::checkCollision(Plane plane, Triangle tri, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Plane plane, Triangle tri, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
+	// Are the objects in the same collision layer?
+	if (!(plane.layer & tri.layer)) return false;
+	if (!(plane.still || tri.still)) return false;
+
 	// Distances to the plane:
 	float d[3];
 
@@ -354,77 +391,77 @@ bool CollisionManager::checkCollision(Plane plane, Triangle tri, glm::fvec3 * ou
 	return true;
 }
 
-bool CollisionManager::checkCollision(BoundingBox box, Sphere sphere, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(BoundingBox box, Sphere sphere, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
-	return checkCollision(sphere, box, outHit);
+	return checkCollision(sphere, box, outHit, outNormal);
 }
 
-bool CollisionManager::checkCollision(BoundingBox box, Plane plane, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(BoundingBox box, Plane plane, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
-	return checkCollision(plane, box, outHit);
+	return checkCollision(plane, box, outHit, outNormal);
 }
 
-bool CollisionManager::checkCollision(BoundingBox A, BoundingBox B, glm::fvec3 * outHit)
-{
-	return false;
-}
-
-bool CollisionManager::checkCollision(BoundingBox box, AABoundingBox aabox, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(BoundingBox A, BoundingBox B, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	return false;
 }
 
-bool CollisionManager::checkCollision(BoundingBox box, Triangle tri, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(BoundingBox box, AABoundingBox aabox, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	return false;
 }
 
-bool CollisionManager::checkCollision(AABoundingBox aabox, Sphere sphere, glm::fvec3 * outHit)
-{
-	return checkCollision(sphere, aabox, outHit);
-}
-
-bool CollisionManager::checkCollision(AABoundingBox aabox, Plane plane, glm::fvec3 * outHit)
-{
-	return checkCollision(plane, aabox, outHit);
-}
-
-bool CollisionManager::checkCollision(AABoundingBox aabox, BoundingBox box, glm::fvec3 * outHit)
-{
-	return checkCollision(box, aabox, outHit);
-}
-
-bool CollisionManager::checkCollision(AABoundingBox A, AABoundingBox B, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(BoundingBox box, Triangle tri, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	return false;
 }
 
-bool CollisionManager::checkCollision(AABoundingBox aabox, Triangle tri, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(AABoundingBox aabox, Sphere sphere, glm::fvec3 * outHit, glm::fvec3 * outNormal)
+{
+	return checkCollision(sphere, aabox, outHit, outNormal);
+}
+
+bool CollisionManager::checkCollision(AABoundingBox aabox, Plane plane, glm::fvec3 * outHit, glm::fvec3 * outNormal)
+{
+	return checkCollision(plane, aabox, outHit, outNormal);
+}
+
+bool CollisionManager::checkCollision(AABoundingBox aabox, BoundingBox box, glm::fvec3 * outHit, glm::fvec3 * outNormal)
+{
+	return checkCollision(box, aabox, outHit, outNormal);
+}
+
+bool CollisionManager::checkCollision(AABoundingBox A, AABoundingBox B, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	return false;
 }
 
-bool CollisionManager::checkCollision(Triangle tri, Sphere sphere, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(AABoundingBox aabox, Triangle tri, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
-	return checkCollision(sphere, tri, outHit);
+	return false;
 }
 
-bool CollisionManager::checkCollision(Triangle tri, Plane plane, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Triangle tri, Sphere sphere, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
-	return checkCollision(plane, tri, outHit);
+	return checkCollision(sphere, tri, outHit, outNormal);
 }
 
-bool CollisionManager::checkCollision(Triangle tri, BoundingBox box, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Triangle tri, Plane plane, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
-	return checkCollision(box, tri, outHit);
+	return checkCollision(plane, tri, outHit, outNormal);
 }
 
-bool CollisionManager::checkCollision(Triangle tri, AABoundingBox aabox, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Triangle tri, BoundingBox box, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
-	return checkCollision(aabox, tri, outHit);
+	return checkCollision(box, tri, outHit, outNormal);
 }
 
-bool CollisionManager::checkCollision(Triangle A, Triangle B, glm::fvec3 * outHit)
+bool CollisionManager::checkCollision(Triangle tri, AABoundingBox aabox, glm::fvec3 * outHit, glm::fvec3 * outNormal)
+{
+	return checkCollision(aabox, tri, outHit, outNormal);
+}
+
+bool CollisionManager::checkCollision(Triangle A, Triangle B, glm::fvec3 * outHit, glm::fvec3 * outNormal)
 {
 	return false;
 }

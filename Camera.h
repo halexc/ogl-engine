@@ -41,7 +41,7 @@ public:
 	void rotateAroundPoint(float angle, glm::fvec3 axis, glm::fvec3 center);
 
 	*/
-	void setViewProjection(Shader s);
+	void setViewProjection(Shader &s);
 
 private:
 	Transform3D transform;

@@ -4,10 +4,14 @@
 #include "Transform3D.h"
 
 struct Collider {
+	// Colliders may only intersect with other colliders if they are in the same layer.
 	char layer = 0x01;
+
+	// Still colliders do not interact with each other, only with non-still colliders.
+	bool still = false;
 };
 
-struct Plane : Collider{
+struct Plane : Collider {
 	glm::fvec3 normal;
 	float d;
 };

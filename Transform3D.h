@@ -10,11 +10,17 @@ public:
 
 	Transform3D();
 	~Transform3D();
-	// Get the (inverse) transformation matrix (e.g. to set the model matrix).
+
+	// Get the transformation matrix (e.g. to set the model matrix).
 	// Usually, the standard transformation matrix is used for objects in the
 	// world, while for the view matrix, the inverse camera transformation
 	// matrix is more commonly utilised.
 	glm::fmat4 getTransform();
+
+	// Get the inverse transformation matrix (e.g. to set the view matrix).
+	// Usually, the standard transformation matrix is used for objects in the
+	// world, while for the view matrix, the inverse camera transformation
+	// matrix is more commonly utilised.
 	glm::fmat4 getTransformInverted();
 
 	void setTransform(glm::fmat4 transform);
@@ -32,6 +38,8 @@ public:
 
 	void setPosition(glm::fvec3 position);
 	void setPosition(float x, float y, float z);
+
+	virtual void update(double delta);
 
 	glm::fvec3 getPosition();
 	glm::fvec3 getPositionGlobal();
@@ -82,7 +90,7 @@ private:
 
 	// Update the transformation matrices to align with the stored transformation data
 	void validate();
-	// Is the current transformation matrix still valid?
+	// Are the current transformation matrices still valid?
 	bool valid = true;
 
 	glm::fmat4 transformation = glm::fmat4(1.0f);

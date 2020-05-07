@@ -59,7 +59,7 @@ void main()
 	for(int i = 0; i < nrLights; i++) 
 		result += calcPointLight(light[i], Normal, FragmentPos, viewDir, TexCoord); 
 		
-	FragColor = vec4(quantify(result, 6), 1.0f);//texture(mat.texDiffuse, TexCoord) * vec4(mat.diffuseColor, 1.0f);
+	FragColor = vec4(quantify(result, 16), 1.0f);//texture(mat.texDiffuse, TexCoord) * vec4(mat.diffuseColor, 1.0f);
 }
 vec3 calcDirectionalLight(DirectionalLight light, vec3 normal, vec3 fragmentPos, vec3 viewDirection, vec2 texCoord)
 {

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "glm\glm.hpp"
+#include "Transform3D.h"
+
 #include <vector>
 
 #define INERTIA_TENSOR_SPHERE			0x00
@@ -12,29 +14,33 @@
 #define INERTIA_TENSOR_CYLINDER_HOLLOW	0x06
 
 //Struct to apply forces over time:
-struct forceOverTime {
+struct ContinuousForce {
 	glm::fvec3 force;
+	glm::fvec3 leverage;
 	double timeRemaining;
 };
 
-// Rigidbody object for physics calculations:
-class Rigidbody {
+// Rigidbody object for physics calculations. All forces are declared in global space.
+class Rigidbody : Transform3D {
 public:
 	float mass;
 	glm::fmat3 inertiaTensor = glm::fmat3(1.0f);
-	glm::fvec3 momentumLinear;
-	glm::fvec3 momentumAngular;
+	glm::fvec3 speedLinear;
+	glm::fvec3 speedAngular;
 
 	float friction = 0.125f;
+
+	virtual void update(double delta);
 
 	// Accelerate the rigidbody.
 	void applyAcceleration(glm::fvec3 acc);
 	// Continuously accelerate the rigidbody over time.
 	void applyAccelerationOverTime(glm::fvec3 acc, double time);
 
+	// Accelerate the rotation of the rigidbody.
 	void applyAngularAcceleration(glm::fvec3 acc);
-
-	virtual void update(double delta);
+	// Continuously accelerate the rotation of the rigidbody over time.
+	void applyAngularAccelerationOverTime(glm::fvec3 acc, double time);
 
 	// Apply a force to the rigidbody, optionally with leverage, within the local coordinate system of the object.
 	void applyForce(glm::fvec3 F, glm::fvec3 leverage = glm::fvec3(0.0f, 0.0f, 0.0f));
@@ -50,5 +56,5 @@ public:
 	void generateInertiaTensor_Cylinder(float r, float height, float r_hollow = 0, float mass = 0);
 
 private:
-	std::vector<forceOverTime> continuousForces;
+	std::vector<ContinuousForce> continuousForces;
 };

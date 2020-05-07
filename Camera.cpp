@@ -63,7 +63,7 @@ void Camera::translate(float x, float y, float z)
 {
 	transform.translate(x, y, z);
 }
-void Camera::setViewProjection(Shader s)
+void Camera::setViewProjection(Shader &s)
 {
 	s.setVec3("cameraPos", transform.getPositionGlobal());
 	s.setMat4("projection", projection);
