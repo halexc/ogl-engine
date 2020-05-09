@@ -2,7 +2,14 @@
 
 out vec4 FragColor;
 
+in vec3 FragmentPos;
+in vec3 Normal;
+in vec2 TexCoord;
+in vec4 Color;
+
+uniform vec3 cameraPos;
+
 void main()
 {
-	FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	FragColor = Color;
 }

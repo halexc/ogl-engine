@@ -82,7 +82,7 @@ Material * MaterialManager::loadFromAiMaterial(std::string name, aiMaterial * ma
 void MaterialManager::updateShaders(Camera * c)
 {
 	for(std::map<std::string, Shader *>::iterator it = shaders.begin(); it != shaders.end(); it++)
-		c->setViewProjection(*it->second);
+		c->setShaderMatrices(it->second);
 }
 
 void MaterialManager::updateShaders(glm::fmat4 projection, glm::fmat4 view)

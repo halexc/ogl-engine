@@ -29,6 +29,9 @@ public:
 	glm::fvec3 speedAngular;
 
 	float friction = 0.125f;
+	float rollResistance = 0.0f;
+
+	std::vector<ContinuousForce> continuousForces;
 
 	virtual void update(double delta);
 
@@ -44,8 +47,16 @@ public:
 
 	// Apply a force to the rigidbody, optionally with leverage, within the local coordinate system of the object.
 	void applyForce(glm::fvec3 F, glm::fvec3 leverage = glm::fvec3(0.0f, 0.0f, 0.0f));
-	// Continuously apply a force to the rigidbody, optionally with leverage, within the local coordinate system of the object.
+	// Continuously apply a force to the rigidbody, optionally with leverage, within the global system of the object.
 	void applyForceOverTime(glm::fvec3 F, double time, glm::fvec3 leverage = glm::fvec3(0.0f, 0.0f, 0.0f));
+	// Retrospectively apply a force to the rigidbody over time, optionally with leverage, within the global coordinate system.
+	void applyForceOverPast(glm::fvec3 F, double time, glm::fvec3 leverage = glm::fvec3(0.0f, 0.0f, 0.0f));
+
+	// Bounce the rigidbody on a surface.
+	void reflect(glm::fvec3 normal, float damping = 0.0f, float rotImpact = 0.0f, glm::fvec3 rotLeverage = glm::fvec3(0.0f, 0.0f, 0.0f));
+
+	// Apply friction and rolling resistance.
+	void applyFriction(glm::fvec3 normalForce, glm::fvec3 leverage = glm::fvec3(0.0f, 0.0f, 0.0f), double delta = 0.0);
 
 	void generateInertiaTensor(char type, float width_or_radius, float height = 0, float depth_or_cutout = 0, float mass = 0);
 	void generateInertiaTensor_Sphere(float r, float mass = 0);
@@ -54,7 +65,4 @@ public:
 	void generateInertiaTensor_RodAboutCenter(float length, float mass = 0);
 	void generateInertiaTensor_RodAboutEnd(float length, float mass = 0);
 	void generateInertiaTensor_Cylinder(float r, float height, float r_hollow = 0, float mass = 0);
-
-private:
-	std::vector<ContinuousForce> continuousForces;
 };

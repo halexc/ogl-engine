@@ -49,46 +49,60 @@ void setupGridBuffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_Grid);
 
 	//Array buffer for all grid vertices:
-	float verticesGrid[3 * 36];
+	float verticesGrid[6 * 36];
 	for (int i = 0; i < 18; i++) {
-		verticesGrid[3 * i] = -4.0f + (i / 2) * 1.0f;
-		verticesGrid[3 * i + 1] = 0.0f;
+		verticesGrid[6 * i] = -4.0f + (i / 2) * 1.0f;
+		verticesGrid[6 * i + 1] = 0.0f;
 		if (i % 2) {
-			verticesGrid[3 * i + 2] = 5.0f;
+			verticesGrid[6 * i + 2] = 5.0f;
 		} else
-			verticesGrid[3 * i + 2] = -5.0f;
+			verticesGrid[6 * i + 2] = -5.0f;
+
+		verticesGrid[6 * i + 3] = 1.0f;
+		verticesGrid[6 * i + 4] = 1.0f;
+		verticesGrid[6 * i + 5] = 1.0f;
 	}
 	for (int i = 18; i < 36; i++) {
-		verticesGrid[3 * i + 2] = -4.0f + ((i - 18) / 2) * 1.0f;
-		verticesGrid[3 * i + 1] = 0.0f;
+		verticesGrid[6 * i + 2] = -4.0f + ((i - 18) / 2) * 1.0f;
+		verticesGrid[6 * i + 1] = 0.0f;
 		if (i % 2) {
-			verticesGrid[3 * i] = 5.0f;
+			verticesGrid[6 * i] = 5.0f;
 		}
 		else
-			verticesGrid[3 * i] = -5.0f;
+			verticesGrid[6 * i] = -5.0f;
+
+		verticesGrid[6 * i + 3] = 1.0f;
+		verticesGrid[6 * i + 4] = 1.0f;
+		verticesGrid[6 * i + 5] = 1.0f;
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesGrid), verticesGrid, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 
 	glBindVertexArray(VAO_Axises);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO_Axises);
 
 	//Array buffer for all axis vertices:
-	float verticesAxises[3 * 6] = {
-		0.0f, 0.0f, 0.0f,
-		10.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		0.0f, 10.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 10.0f
+	float verticesAxises[6 * 6] = {
+		0.0f, 0.0f, 0.0f,	1.0f, 0.0f, 0.0f,
+		10.0f, 0.0f, 0.0f,	1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
+		0.0f, 10.0f, 0.0f,	0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 10.0f,	0.0f, 0.0f, 1.0f
 	};
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesAxises), verticesAxises, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) 0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*) (3 * sizeof(float)));
 }
 
 void deleteGridBuffers() {
@@ -110,8 +124,8 @@ void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
 }
 
 void inputHandling();
-void drawAxises(Shader &s);
-void drawGrid(Shader &s);
+void drawAxises(Shader * s);
+void drawGrid(Shader * s);
 
 Camera * c;
 
@@ -131,7 +145,7 @@ void setupGLFW() {
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 
-	window = glfwCreateWindow(windowWidth, windowHeight, "Cloth Simulation 1.0", NULL, NULL);
+	window = glfwCreateWindow(windowWidth, windowHeight, "Billiard Game", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -160,7 +174,7 @@ int main(void) {
 	Scene * scene;
 	//if (const aiScene* sn = importer.ReadFile("res\\multipleObjects_smooth.obj", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
 	//if (const aiScene* sn = importer.ReadFile("res\\cube.obj", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
-	if (const aiScene* sn = importer.ReadFile("res\\Pool.obj", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
+	if (const aiScene* sn = importer.ReadFile("res\\Pool.fbx", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
 		scene = new Scene(sn, true);
 		std::cout << "File loaded." << std::endl;
 	}
@@ -218,12 +232,10 @@ int main(void) {
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//c->setViewProjection(shaderGrid);
-		drawAxises(shaderGrid);
-		drawGrid(shaderGrid);
-
 		scene->draw();
 
+		drawAxises(&shaderGrid);
+		drawGrid(&shaderGrid);
 
 		// Swap buffers:
 		glfwSwapBuffers(window);
@@ -304,27 +316,35 @@ void inputHandling() {
 	if (inputHandler->getMouseButtonState(GLFW_MOUSE_BUTTON_2) & INPUT_HOLD) {
 		double dx, dy;
 		inputHandler->getMouseDelta(dx, dy);
-		c->getTransform()->rotateAroundGlobal(float(1.5 * dy / windowHeight) * glm::pi<float>(), c->getTransform()->getRight(), c->getTransform()->getPositionGlobal() - 3.0f * c->getTransform()->getForward());
-		c->getTransform()->rotateAroundGlobal(float(1.5 * dx / windowWidth) * glm::pi<float>(), glm::fvec3(0.0f, 1.0f, 0.0f), c->getTransform()->getPositionGlobal() - 3.0f * c->getTransform()->getForward());
+		c->getTransform()->rotateAroundGlobal(float(1.5 * dy / windowHeight) * glm::pi<float>(), c->getTransform()->getRight());// , c->getTransform()->getPositionGlobal() - 3.0f * c->getTransform()->getForward());
+		c->getTransform()->rotateAroundGlobal(float(1.5 * dx / windowWidth) * glm::pi<float>(), glm::fvec3(0.0f, 1.0f, 0.0f));//, c->getTransform()->getPositionGlobal() - 3.0f * c->getTransform()->getForward());
 	}
 }
 
-void drawAxises(Shader &s)
+void drawAxises(Shader * s)
 {
 	if (VAO_Axises == 0) setupGridBuffers();
 
-	//s.use();
+	s->use();
+	c->setShaderMatrices(s);
+	s->setMat4("model", glm::fmat4(1.0f));
+
+	glLineWidth(4.0f);
 
 	glBindVertexArray(VAO_Axises);
 	glDrawArrays(GL_LINES, 0, 6);
 	glBindVertexArray(0);
 }
 
-void drawGrid(Shader &s)
+void drawGrid(Shader * s)
 {
 	if (VAO_Grid == 0) setupGridBuffers();
 
-	//s.use();
+	s->use();
+	c->setShaderMatrices(s);
+	s->setMat4("model", glm::fmat4(1.0f));
+
+	glLineWidth(1.0f);
 
 	glBindVertexArray(VAO_Grid);
 	glDrawArrays(GL_LINES, 0, 36);

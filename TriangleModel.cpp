@@ -188,9 +188,9 @@ Transform3D * TriangleModel::getTransform()
 	return &transform;
 }
 
-void TriangleModel::setTransform(glm::fmat4 model)
+void TriangleModel::setTransformGlobal(glm::fmat4 model)
 {
-	transform.setTransform(model);
+	transform.setTransformGlobal(model);
 }
 
 

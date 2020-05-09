@@ -61,6 +61,7 @@ void Scene::loadScene(const aiScene * scene)
 			models.push_back(new PolygonModel(scene->mMeshes[i], mat));
 		}
 	}
+	processNode(scene->mRootNode);
 
 }
 
@@ -100,9 +101,11 @@ void Scene::loadScene(const aiScene * scene, bool ambientFromDiffuse)
 			if (scene->HasMaterials())
 				mat = matManager->getMaterial(scene->mMaterials[scene->mMeshes[i]->mMaterialIndex]->GetName().C_Str());
 
-			models.push_back(new PolygonModel(scene->mMeshes[i], mat));
+			PolygonModel * model = new PolygonModel(scene->mMeshes[i], mat);
+			models.push_back(model);
 		}
 	}
+	processNode(scene->mRootNode);
 }
 
 MaterialManager * Scene::getMaterialManager()
@@ -151,6 +154,47 @@ void Scene::draw()
 
 	for (PolygonModel * mesh : models) {
 		mesh->draw();
+	}
+}
+
+void Scene::processNode(aiNode * node, glm::fmat4 transformParent)
+{
+	PolygonModel * model = NULL;
+	glm::fmat4 transformNode;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			transformNode[i][j] = node->mTransformation[j][i];
+		}
+	}
+
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+		model = models[node->mMeshes[i]];
+		model->getTransform()->setTransformGlobal(transformParent * transformNode);
+	}
+	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+		if (model) processNode(node->mChildren[i], model->getTransform());
+		else processNode(node->mChildren[i], transformParent * transformNode);
+	}
+}
+
+void Scene::processNode(aiNode * node, Transform3D * parent)
+{
+	PolygonModel * model = NULL;
+	glm::fmat4 transformNode;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			transformNode[i][j] = node->mTransformation[j][i];
+		}
+	}
+
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+		model = models[i];
+		model->getTransform()->setParent(parent);
+		model->getTransform()->setTransform(transformNode);
+	}
+	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+		if (model) processNode(node->mChildren[i], model->getTransform());
+		else processNode(node->mChildren[i], parent->getTransform() * transformNode);
 	}
 }
 

@@ -43,12 +43,12 @@ glm::fmat4 Camera::getProjectionMatrix()
 
 void Camera::setView(glm::fmat4 view)
 {
-	transform.setTransformInverted(view);
+	transform.setTransformGlobalInverted(view);
 }
 
 void Camera::lookAt(glm::fvec3 eye, glm::fvec3 tgt, glm::fvec3 up)
 {
-	transform.setTransformInverted(glm::lookAt(eye, tgt, up));
+	transform.setTransformGlobalInverted(glm::lookAt(eye, tgt, up));
 }
 
 Transform3D * Camera::getTransform()
@@ -63,9 +63,10 @@ void Camera::translate(float x, float y, float z)
 {
 	transform.translate(x, y, z);
 }
-void Camera::setViewProjection(Shader &s)
+void Camera::setShaderMatrices(Shader * s)
 {
-	s.setVec3("cameraPos", transform.getPositionGlobal());
-	s.setMat4("projection", projection);
-	s.setMat4("view", transform.getTransformInverted());
+	s->use();
+	s->setVec3("cameraPos", transform.getPositionGlobal());
+	s->setMat4("projection", projection);
+	s->setMat4("view", transform.getTransformInverted());
 }

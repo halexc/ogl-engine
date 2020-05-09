@@ -42,7 +42,7 @@ public:
 	void invalidate();
 
 	Transform3D * getTransform();
-	void setTransform(glm::fmat4 model);
+	void setTransformGlobal(glm::fmat4 model);
 
 	void getPolygons(std::vector<Vertex3D> ** vertices, std::vector<unsigned int> ** indices);
 

@@ -41,6 +41,8 @@ private:
 	std::vector<Light *> lights;
 
 	MaterialManager * matManager;
+	void processNode(aiNode * node, glm::fmat4 transformParent = glm::fmat4(1.0f));
+	void processNode(aiNode * node, Transform3D * parent);
 
 	Camera * loadCamera(aiCamera * cam);
 };

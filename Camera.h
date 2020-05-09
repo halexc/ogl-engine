@@ -23,25 +23,8 @@ public:
 
 	void translate(glm::fvec3 v);
 	void translate(float x, float y, float z);
-	/*
-	void setView(glm::fvec3 position, glm::fvec3 target, glm::fvec3 upVector);
-	glm::fmat4 getViewMatrix();
 
-	void setPosition(glm::fvec3 position);
-	void setPosition(float x, float y, float z);
-	glm::fvec3 getPosition();
-
-
-	void setRotation(glm::fquat rotation);
-	glm::fquat getRotation();
-
-	void rotate(glm::fquat rotation);
-	void rotate(float angle, glm::fvec3 axis);
-	void rotateAroundPoint(glm::fquat rotation, glm::fvec3 center);
-	void rotateAroundPoint(float angle, glm::fvec3 axis, glm::fvec3 center);
-
-	*/
-	void setViewProjection(Shader &s);
+	void setShaderMatrices(Shader * s);
 
 private:
 	Transform3D transform;

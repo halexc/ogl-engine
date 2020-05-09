@@ -10,6 +10,14 @@ Transform3D::Transform3D()
 
 Transform3D::~Transform3D()
 {
+	if (parent) {
+		std::vector<Transform3D *>::iterator it = std::find(this->parent->children.begin(), this->parent->children.end(), this);
+		this->parent->children.erase(it);
+	}
+	for (Transform3D * tf : children) {
+		tf->setParent(NULL);
+	}
+
 }
 
 glm::fmat4 Transform3D::getTransform()
@@ -30,20 +38,29 @@ glm::fmat4 Transform3D::getTransformInverted()
 
 void Transform3D::setTransform(glm::fmat4 transform)
 {
-	transformation = transform;
-	inverseT = glm::inverse(transform);
 	glm::fvec3 dummy3;
 	glm::fvec4 dummy4;
-	glm::decompose(transformation, size, orientation, position, dummy3, dummy4);
+	glm::decompose(transform, size, orientation, position, dummy3, dummy4);
+	invalidate();
+}
+
+void Transform3D::setTransformGlobal(glm::fmat4 transform)
+{
+	if(parent) transform = parent->getTransformInverted() * transform;
+	glm::fvec3 dummy3;
+	glm::fvec4 dummy4;
+	glm::decompose(transform, size, orientation, position, dummy3, dummy4);
+	invalidate();
 }
 
 void Transform3D::setTransformInverted(glm::fmat4 transform)
 {
-	inverseT = transform;
-	transformation = glm::inverse(transform);
-	glm::fvec3 dummy3;
-	glm::fvec4 dummy4;
-	glm::decompose(transformation, size, orientation, position, dummy3, dummy4);
+	setTransform(glm::inverse(transform));
+}
+
+void Transform3D::setTransformGlobalInverted(glm::fmat4 transform)
+{
+	setTransformGlobal(glm::inverse(transform));
 }
 
 void Transform3D::translateOriented(glm::fvec3 translation)
@@ -54,7 +71,7 @@ void Transform3D::translateOriented(glm::fvec3 translation)
 	glm::fquat translationQuat = glm::fquat(0.0f, translation.x, translation.y, translation.z);
 	translationQuat = orientation * translationQuat * glm::conjugate(orientation);
 	position += glm::fvec3(translationQuat.x, translationQuat.y, translationQuat.z);
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::translateOriented(float dx, float dy, float dz)
@@ -65,7 +82,7 @@ void Transform3D::translateOriented(float dx, float dy, float dz)
 void Transform3D::translate(glm::fvec3 translation)
 {
 	position += translation;
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::translate(float dx, float dy, float dz)
@@ -85,7 +102,7 @@ void Transform3D::translateGlobal(glm::fvec3 translation)
 		translation = glm::fvec3(translationRotated.x, translationRotated.y, translationRotated.z) / sizeParent;
 		position += translation;
 	}
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::translateGlobal(float dx, float dy, float dz)
@@ -96,7 +113,7 @@ void Transform3D::translateGlobal(float dx, float dy, float dz)
 void Transform3D::setPosition(glm::fvec3 position)
 {
 	this->position = position;
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::setPosition(float x, float y, float z)
@@ -167,7 +184,7 @@ glm::fvec3 Transform3D::getForwardGlobal()
 void Transform3D::rotate(glm::fquat rotation)
 {
 	orientation = orientation * rotation;
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::rotate(float angle, glm::fvec3 axis)
@@ -184,7 +201,7 @@ void Transform3D::rotateAround(glm::fquat rotation, glm::fvec3 center)
 	glm::fvec3 deltaRotated = glm::fvec3(deltaQuat.x, deltaQuat.y, deltaQuat.z);	// Conversion back to 1x3 - Vector
 	this->translate(delta - deltaRotated);											// Apply translation: Move object, to center, then back with the rotation applied
 
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::rotateAround(float angle, glm::fvec3 axis, glm::fvec3 center)
@@ -201,7 +218,7 @@ void Transform3D::rotateAroundGlobal(glm::fquat rotation, glm::fvec3 center)
 	glm::fvec3 deltaRotated = glm::fvec3(deltaQuat.x, deltaQuat.y, deltaQuat.z);
 	this->translateGlobal(delta - deltaRotated);
 
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::rotateAroundGlobal(float angle, glm::fvec3 axisGlobal, glm::fvec3 center)
@@ -218,7 +235,7 @@ void Transform3D::rotateGlobal(glm::fquat rotation)
 		glm::fquat parentOrientation = parent->getOrientationGlobal();
 		orientation = glm::inverse(parentOrientation) * rotation * parentOrientation * orientation;
 	}
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::rotateGlobal(float angle, glm::fvec3 axis)
@@ -229,7 +246,7 @@ void Transform3D::rotateGlobal(float angle, glm::fvec3 axis)
 void Transform3D::setOrientation(glm::fquat orientation)
 {
 	this->orientation = orientation;
-	valid = false;
+	invalidate();
 }
 
 glm::fquat Transform3D::getOrientation()
@@ -264,7 +281,7 @@ void Transform3D::scale(glm::fvec3 scale)
 void Transform3D::scale(float s)
 {
 	size *= s;
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::scale(float x, float y, float z)
@@ -272,7 +289,7 @@ void Transform3D::scale(float x, float y, float z)
 	size.x *= x;
 	size.y *= y;
 	size.z *= z;
-	valid = false;
+	invalidate();
 }
 
 void Transform3D::scaleGlobal(glm::fvec3 scale)
@@ -289,7 +306,7 @@ void Transform3D::scaleGlobal(float x, float y, float z)
 void Transform3D::setScale(glm::fvec3 scale)
 {
 	this->size = scale;
-	valid = false;
+	invalidate();
 }
 
 glm::fvec3 Transform3D::getScale()
@@ -302,6 +319,26 @@ glm::fvec3 Transform3D::getScaleGlobal()
 	if (parent)
 		return parent->getScaleGlobal() * size;
 	return size;
+}
+
+void Transform3D::invalidate()
+{
+	valid = false;
+	for (Transform3D * tf : children) {
+		tf->invalidate();
+	}
+}
+
+void Transform3D::setParent(Transform3D * parent)
+{
+	if (this->parent) {
+		std::vector<Transform3D *>::iterator it = std::find(this->parent->children.begin(), this->parent->children.end(), this);
+		this->parent->children.erase(it);
+	}
+	if(parent) parent->children.push_back(this);
+	this->parent = parent;
+
+	invalidate();
 }
 
 void Transform3D::validate()
@@ -318,3 +355,4 @@ void Transform3D::validate()
 	inverseT = glm::inverse(transformation);
 	valid = true;
 }
+

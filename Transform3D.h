@@ -4,6 +4,8 @@
 #include <glm\gtc\quaternion.hpp>
 #include <glm\gtx\quaternion.hpp>
 
+#include <vector>
+
 class Transform3D
 {
 public:
@@ -24,7 +26,10 @@ public:
 	glm::fmat4 getTransformInverted();
 
 	void setTransform(glm::fmat4 transform);
+	void setTransformGlobal(glm::fmat4 transform);
+
 	void setTransformInverted(glm::fmat4 transform);
+	void setTransformGlobalInverted(glm::fmat4 transform);
 
 	//Translation:
 	void translateOriented(glm::fvec3 translation);
@@ -84,9 +89,14 @@ public:
 	glm::fvec3 getScale();
 	glm::fvec3 getScaleGlobal();
 
+	void invalidate();
+
+	void setParent(Transform3D * parent);
+
 private:
 	//Does this transform have a parent?
 	Transform3D * parent = NULL;
+	std::vector<Transform3D *> children;
 
 	// Update the transformation matrices to align with the stored transformation data
 	void validate();

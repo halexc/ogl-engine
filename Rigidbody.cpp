@@ -10,15 +10,9 @@ void Rigidbody::update(double delta)
 	// Iterate through all active forces and apply them
 	std::vector<ContinuousForce>::iterator it = continuousForces.begin();
 	while (it != continuousForces.end()) {
-		float time = fmin(delta, it->timeRemaining);
+		double time = fmin(delta, it->timeRemaining);
 
-		// Apply Force for future calculations:
-		applyForce(it->force * time, it->leverage);
-
-		// Retrospectively update the transform, assuming linear acceleration (a/2 * t^2):
-		translateGlobal(0.5f * it->force * time * time);
-		glm::fvec3 angular = 0.5f * glm::cross(it->force, it->leverage) * time * time;
-		rotateGlobal(glm::length(angular), angular);
+		applyForceOverPast(it->force, time, it->leverage);
 
 		it->timeRemaining -= time;
 		if (it->timeRemaining <= 0.0f) {
@@ -73,6 +67,56 @@ void Rigidbody::applyForceOverTime(glm::fvec3 F, double time, glm::fvec3 leverag
 	force.leverage = leverage;
 	force.timeRemaining = time;
 	continuousForces.push_back(force);
+}
+
+void Rigidbody::applyForceOverPast(glm::fvec3 F, double time, glm::fvec3 leverage)
+{
+	// Apply Force for future calculations:
+	applyForce(F * float(time), leverage);
+
+	// Retrospectively update the transform, assuming linear acceleration (a/2 * t^2):
+	translateGlobal(0.5f * F * float(time * time));
+	glm::fvec3 angular = 0.5f * glm::cross(F, leverage) * float(time * time);
+	rotateGlobal(glm::length(angular), angular);
+}
+
+void Rigidbody::reflect(glm::fvec3 normal, float damping, float rotImpact, glm::fvec3 rotLeverage)
+{
+	bool applyRot = (rotImpact != 0 && rotLeverage.length() > 0);
+	damping = fmaxf(0.0f, 1.0f - damping);
+
+	normal = glm::normalize(normal);
+
+	// Energy before reflection
+	float E_kin1 = 0.5f * this->mass * glm::length2(this->speedLinear);
+	float E_rot1 = 0.5f * glm::length(this->inertiaTensor * (this->speedAngular * this->speedAngular));
+
+	// Add rotation portion
+	if (applyRot) this->speedLinear += rotImpact * glm::cross(this->speedAngular, rotLeverage);
+	// Reflect the velocity
+	this->speedLinear = this->speedLinear - 2.0f * glm::dot(this->speedLinear, normal) * normal;
+
+	// Adjust rotation via energy conservation
+	float E_kin2 = 1 / 2 * this->mass * glm::length2(this->speedLinear);
+	float p = (E_kin1 + E_rot1 - E_kin2) / E_rot1; // E_rot2 = p * E_rot1 => sqrt(p) * w_1 = w_2
+	this->speedAngular *= sqrtf(p);
+
+	// Apply damping:
+	this->speedAngular *= damping;
+	this->speedLinear *= damping;
+}
+
+void Rigidbody::applyFriction(glm::fvec3 normalForce, glm::fvec3 leverage, double delta)
+{
+	glm::fvec3 speedRot = glm::cross(speedAngular, leverage);
+
+	// Friction versus "sliding"
+	if (delta > 0) applyForceOverPast(friction * normalForce.length() * -glm::normalize(speedLinear + speedRot), delta, leverage);
+	else applyForce(friction * normalForce.length() * -glm::normalize(speedLinear + speedRot), leverage);
+
+	// Rolling resistance
+	if (delta > 0) applyForceOverPast(rollResistance * normalForce.length() * -glm::normalize(speedRot), delta, leverage);
+	else applyForce(rollResistance * normalForce.length() * -glm::normalize(speedRot), leverage);
 }
 
 void Rigidbody::generateInertiaTensor(char type, float width_or_radius, float height, float depth_or_cutout, float mass)
