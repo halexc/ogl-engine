@@ -3,6 +3,8 @@
 #include "glm\glm.hpp"
 #include "Transform3D.h"
 
+#include "Component.h"
+
 #include <vector>
 
 #define INERTIA_TENSOR_SPHERE			0x00
@@ -21,7 +23,7 @@ struct ContinuousForce {
 };
 
 // Rigidbody object for physics calculations. All forces are declared in global space.
-class Rigidbody : Transform3D {
+class Rigidbody : public Component {
 public:
 	float mass;
 	glm::fmat3 inertiaTensor = glm::fmat3(1.0f);

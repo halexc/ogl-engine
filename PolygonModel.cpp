@@ -42,7 +42,7 @@ void PolygonModel::draw()
 		return;
 	}
 	mat->prepare();
-	mat->getShader()->setMat4("model", transform.getTransform());
+	if(getTransform()) mat->getShader()->setMat4("model", getTransform()->getTransform());
 
 	if (!valid) {
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -75,11 +75,6 @@ void PolygonModel::setName(std::string name)
 std::string PolygonModel::getName()
 {
 	return name;
-}
-
-Transform3D * PolygonModel::getTransform()
-{
-	return &transform;
 }
 
 void PolygonModel::invalidate()

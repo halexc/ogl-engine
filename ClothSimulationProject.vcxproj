@@ -132,6 +132,8 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
+    <ClCompile Include="Component.cpp" />
+    <ClCompile Include="Entity3D.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="InputHandler.cpp" />
     <ClCompile Include="Light.cpp" />
@@ -151,6 +153,8 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionManager.h" />
+    <ClInclude Include="Component.h" />
+    <ClInclude Include="Entity3D.h" />
     <ClInclude Include="Rigidbody.h" />
     <ClInclude Include="InputHandler.h" />
     <ClInclude Include="Light.h" />

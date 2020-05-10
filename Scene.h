@@ -11,6 +11,7 @@
 #include "PolygonModel.h"
 #include "Light.h"
 #include "Camera.h"
+#include "Entity3D.h"
 
 class Scene
 {
@@ -24,7 +25,7 @@ public:
 	void loadScene(const aiScene * scene, bool ambientFromDiffuse);
 
 	MaterialManager * getMaterialManager();
-	PolygonModel * getMesh(unsigned int i);
+	Entity3D * getEntity3D(unsigned int i);
 	Camera * getCamera(unsigned int i);
 	
 	unsigned int addCamera(Camera * c);
@@ -36,7 +37,7 @@ public:
 private:
 	unsigned int activeCamera;
 
-	std::vector<PolygonModel *> models;
+	std::vector<Entity3D *> models;
 	std::vector<Camera *> cameras;
 	std::vector<Light *> lights;
 

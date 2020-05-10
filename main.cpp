@@ -25,8 +25,7 @@ GLFWwindow * window;
 int windowWidth = 1280, windowHeight = 720;
 double delta;
 bool running = true;
-bool showAxis;
-bool showGrid;
+bool debugDrawing = false;
 
 bool cameraInit = false;
 
@@ -61,6 +60,11 @@ void setupGridBuffers() {
 		verticesGrid[6 * i + 3] = 1.0f;
 		verticesGrid[6 * i + 4] = 1.0f;
 		verticesGrid[6 * i + 5] = 1.0f;
+
+		if (i == 8 || i == 9) {
+			verticesGrid[6 * i + 3] = 0.0f;
+			verticesGrid[6 * i + 4] = 0.0f;
+		}
 	}
 	for (int i = 18; i < 36; i++) {
 		verticesGrid[6 * i + 2] = -4.0f + ((i - 18) / 2) * 1.0f;
@@ -74,6 +78,11 @@ void setupGridBuffers() {
 		verticesGrid[6 * i + 3] = 1.0f;
 		verticesGrid[6 * i + 4] = 1.0f;
 		verticesGrid[6 * i + 5] = 1.0f;
+
+		if (i == 26 || i == 27) {
+			verticesGrid[6 * i + 4] = 0.0f;
+			verticesGrid[6 * i + 5] = 0.0f;
+		}
 	}
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesGrid), verticesGrid, GL_STATIC_DRAW);
 
@@ -234,8 +243,10 @@ int main(void) {
 
 		scene->draw();
 
-		drawAxises(&shaderGrid);
-		drawGrid(&shaderGrid);
+		if (debugDrawing) {
+			drawAxises(&shaderGrid);
+			drawGrid(&shaderGrid);
+		}
 
 		// Swap buffers:
 		glfwSwapBuffers(window);
@@ -293,8 +304,7 @@ void inputHandling() {
 		c->getTransform()->translateOriented(glm::fvec3(float(d) * 4.0f, 0.0f, 0.0f));
 	}
 	if (inputHandler->getKeyState(GLFW_KEY_F1) & INPUT_PRESSED) {
-		showAxis = !showAxis;
-		std::cout << "Toggle axis drawing." << std::endl;
+		debugDrawing = !debugDrawing;
 	}
 
 	if (inputHandler->getKeyState(GLFW_KEY_1) & INPUT_PRESSED) {

@@ -4,6 +4,7 @@
 #include "Transform3D.h"
 
 struct Collider {
+	virtual ~Collider() {};
 	// Colliders may only intersect with other colliders if they are in the same layer.
 	char layer = 0x01;
 

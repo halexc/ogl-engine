@@ -121,10 +121,6 @@ void Transform3D::setPosition(float x, float y, float z)
 	setPosition(glm::fvec3(x, y, z));
 }
 
-void Transform3D::update(double delta)
-{
-}
-
 glm::fvec3 Transform3D::getPosition()
 {
 	return position;

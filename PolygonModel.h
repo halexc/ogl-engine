@@ -4,6 +4,8 @@
 #include "assimp\scene.h"
 #include "assimp\postprocess.h"
 
+#include "Component.h"
+
 #include "Material.h"
 #include "MaterialManager.h"
 
@@ -22,7 +24,7 @@ struct Vertex {
 	glm::fvec3 bitangent;
 };
 
-class PolygonModel
+class PolygonModel : public Component
 {
 public:
 	PolygonModel();
@@ -32,15 +34,14 @@ public:
 	PolygonModel(aiMesh * mesh, aiMaterial * mat, MaterialManager * matManager);
 	~PolygonModel();
 
-	void draw();
+	virtual void update(double delta) {};
+	virtual void draw();
 
 	void setMaterial(Material * mat);
 	Material * getMaterial();
 
 	void setName(std::string name);
 	std::string getName();
-
-	Transform3D * getTransform();
 
 	void invalidate();
 	void deleteResources();
@@ -49,8 +50,6 @@ private:
 	GLuint VAO, VBO, EBO;
 	bool valid = false;
 	void setupBuffers();
-
-	Transform3D transform;
 
 	Material * mat;
 	std::string name;

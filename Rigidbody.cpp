@@ -4,8 +4,8 @@
 void Rigidbody::update(double delta)
 {
 	// Update position and rotation:
-	translateGlobal(float(delta) * speedLinear);
-	rotateGlobal(float(delta) * glm::length(speedAngular), speedAngular);
+	getTransform()->translateGlobal(float(delta) * speedLinear);
+	getTransform()->rotateGlobal(float(delta) * glm::length(speedAngular), speedAngular);
 
 	// Iterate through all active forces and apply them
 	std::vector<ContinuousForce>::iterator it = continuousForces.begin();
@@ -75,9 +75,9 @@ void Rigidbody::applyForceOverPast(glm::fvec3 F, double time, glm::fvec3 leverag
 	applyForce(F * float(time), leverage);
 
 	// Retrospectively update the transform, assuming linear acceleration (a/2 * t^2):
-	translateGlobal(0.5f * F * float(time * time));
+	getTransform()->translateGlobal(0.5f * F * float(time * time));
 	glm::fvec3 angular = 0.5f * glm::cross(F, leverage) * float(time * time);
-	rotateGlobal(glm::length(angular), angular);
+	getTransform()->rotateGlobal(glm::length(angular), angular);
 }
 
 void Rigidbody::reflect(glm::fvec3 normal, float damping, float rotImpact, glm::fvec3 rotLeverage)

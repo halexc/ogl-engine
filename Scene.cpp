@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "Component.h"
 
 Scene::Scene()
 {
@@ -58,7 +59,9 @@ void Scene::loadScene(const aiScene * scene)
 			if (scene->HasMaterials())
 				 mat = matManager->getMaterial(scene->mMaterials[scene->mMeshes[i]->mMaterialIndex]->GetName().C_Str());
 
-			models.push_back(new PolygonModel(scene->mMeshes[i], mat));
+			Entity3D * entity = new Entity3D();
+			entity->addComponent(new PolygonModel(scene->mMeshes[i], mat));
+			models.push_back(entity);
 		}
 	}
 	processNode(scene->mRootNode);
@@ -101,8 +104,9 @@ void Scene::loadScene(const aiScene * scene, bool ambientFromDiffuse)
 			if (scene->HasMaterials())
 				mat = matManager->getMaterial(scene->mMaterials[scene->mMeshes[i]->mMaterialIndex]->GetName().C_Str());
 
-			PolygonModel * model = new PolygonModel(scene->mMeshes[i], mat);
-			models.push_back(model);
+			Entity3D * entity = new Entity3D();
+			entity->addComponent(new PolygonModel(scene->mMeshes[i], mat));
+			models.push_back(entity);
 		}
 	}
 	processNode(scene->mRootNode);
@@ -113,7 +117,7 @@ MaterialManager * Scene::getMaterialManager()
 	return matManager;
 }
 
-PolygonModel * Scene::getMesh(unsigned int i)
+Entity3D * Scene::getEntity3D(unsigned int i)
 {
 	return models.at(i);
 }
@@ -131,7 +135,9 @@ unsigned int Scene::addCamera(Camera * c)
 
 unsigned int Scene::addMesh(PolygonModel * mesh)
 {
-	models.push_back(mesh);
+	Entity3D * entity = new Entity3D();
+	entity->addComponent(mesh);
+	models.push_back(entity);
 	return(models.size() - 1);
 }
 
@@ -152,14 +158,14 @@ void Scene::draw()
 		(*it).second->setInt("nrLights", lights.size());
 	}
 
-	for (PolygonModel * mesh : models) {
-		mesh->draw();
+	for (Entity3D * entity : models) {
+		entity->draw();
 	}
 }
 
 void Scene::processNode(aiNode * node, glm::fmat4 transformParent)
 {
-	PolygonModel * model = NULL;
+	Entity3D * model = NULL;
 	glm::fmat4 transformNode;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -179,7 +185,7 @@ void Scene::processNode(aiNode * node, glm::fmat4 transformParent)
 
 void Scene::processNode(aiNode * node, Transform3D * parent)
 {
-	PolygonModel * model = NULL;
+	Entity3D * model = NULL;
 	glm::fmat4 transformNode;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -189,6 +195,7 @@ void Scene::processNode(aiNode * node, Transform3D * parent)
 
 	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
 		model = models[i];
+		model->getTransform();
 		model->getTransform()->setParent(parent);
 		model->getTransform()->setTransform(transformNode);
 	}

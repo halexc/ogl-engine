@@ -44,8 +44,6 @@ public:
 	void setPosition(glm::fvec3 position);
 	void setPosition(float x, float y, float z);
 
-	virtual void update(double delta);
-
 	glm::fvec3 getPosition();
 	glm::fvec3 getPositionGlobal();
 
