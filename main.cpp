@@ -193,25 +193,25 @@ int main(void) {
 	}
 	Shader shaderGrid = Shader("Shader\\shaderGrid.vs", "Shader\\shaderGrid.fs");
 	
-	Light * l = new Light();
+	PointLight * l = new PointLight();
 	l->setPosition(0.0f, -1.0f, 0.0f);
 	l->setIntensity(1.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(l);
 
-	l = new Light();
+	l = new PointLight();
 	l->setPosition(5.0f, 2.5f, 0.5f);
 	l->setIntensity(5.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(l);
 
-	l = new Light();
+	l = new PointLight();
 	l->setPosition(2.5f, 2.5f, 2.5f);
 	l->setIntensity(5.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(l);
 
-	l = new Light();
+	l = new PointLight();
 	l->setPosition(0.0f, 2.5f, 5.0f);
 	l->setIntensity(5.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 0.0f));

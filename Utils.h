@@ -1,5 +1,6 @@
 #pragma once
-#include "glad/glad.h"
+
+#include <glad\glad.h>
 #include "SOIL2/SOIL2.h"
 class Utils
 {
@@ -17,5 +18,12 @@ public:
 	*	texture.
 	*/
 	static void LoadTextureFromImage(GLuint * inTexID, const char * path);
+
+
+	/** bool InitFBO(GLuint * fb, GLint * texId, GLsizei width, GLsizei height, GLint format)
+	*
+	*   Use: Generate Framebuffer Object.
+	*/
+	static bool GenerateDepthFBO(GLuint * fb, GLuint * texId, GLsizei width, GLsizei height);
 };
 

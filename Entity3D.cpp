@@ -37,8 +37,6 @@ void Entity3D::addComponent(Component * c)
 	c->setParentTransform(&transform);
 }
 
-
-
 Component * Entity3D::getComponent(unsigned int i)
 {
 	if (i >= components.size()) {

@@ -21,16 +21,41 @@ public:
 	Transform3D * getTransform();
 
 	void addComponent(Component * c);
-	/*
-	template <class T>
-	T * getComponent<T>() {
+	
+	template <typename T>
+	T * getComponent() {
 		for (Component * c : components) {
 			if (T * ret = dynamic_cast<T>(c)) 
 				return ret;
 		}
 		return NULL;
 	}
-	*/
+
+	template <typename T>
+	int getNumComponentsOfType() {
+		int i = 0;
+		for (Component * c : components) {
+			if (dynamic_cast<T>(c))
+				i++;
+		}
+		return i;
+	}
+
+	template <typename T>
+	T * getComponents(int * outNComponentsOfT = NULL) {
+		int c = getNumComponentsOfType<T>();
+		if (outNComponentsOfT) *outNComponentsOfT = c;
+		T ret[c];
+		int i = 0;
+		for (Component * c : components) {
+			if (T * t = dynamic_cast<T>(c)) {
+				ret[i] = t;
+				i++;
+			}
+		}
+		return ret;
+	}
+
 	Component * getComponent(unsigned int i);
 	unsigned int getNumComponents();
 
