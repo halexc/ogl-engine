@@ -153,6 +153,7 @@ void setupGLFW() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	window = glfwCreateWindow(windowWidth, windowHeight, "Billiard Game", NULL, NULL);
 	if (!window)
@@ -173,6 +174,8 @@ void setupGLFW() {
 	glCullFace(GL_BACK);
 
 	glEnable(GL_DEPTH_TEST);
+
+	glEnable(GL_MULTISAMPLE);
 }
 
 int main(void) {

@@ -37,12 +37,29 @@ PolygonModel::~PolygonModel()
 
 void PolygonModel::draw()
 {
-	if (mat->getShader() == NULL) {
+	draw(mat);
+}
+
+void PolygonModel::draw(Material * mat)
+{
+	if(mat == NULL) {
+		std::cerr << "PolygonModel.cpp: ERROR while drawing. No Material available. Drawing process aborted..." << std::endl;
+		return;
+	}
+
+	mat->prepare();
+
+	draw(mat->getShader());
+}
+
+void PolygonModel::draw(Shader * s)
+{
+	if (s == NULL) {
 		std::cerr << "PolygonModel.cpp: ERROR while drawing. No Shader available. Drawing process aborted..." << std::endl;
 		return;
 	}
-	mat->prepare();
-	if(getTransform()) mat->getShader()->setMat4("model", getTransform()->getTransform());
+	if (getTransform()) s->setMat4("model", getTransform()->getTransform());
+	else s->setMat4("model", glm::fmat4(1.0f));
 
 	if (!valid) {
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);

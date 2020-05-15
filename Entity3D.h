@@ -25,7 +25,7 @@ public:
 	template <typename T>
 	T * getComponent() {
 		for (Component * c : components) {
-			if (T * ret = dynamic_cast<T>(c)) 
+			if (T * ret = dynamic_cast<T*>(c)) 
 				return ret;
 		}
 		return NULL;

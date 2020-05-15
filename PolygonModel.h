@@ -36,6 +36,8 @@ public:
 
 	virtual void update(double delta) {};
 	virtual void draw();
+	virtual void draw(Material * mat);
+	virtual void draw(Shader * s);
 
 	void setMaterial(Material * mat);
 	Material * getMaterial();

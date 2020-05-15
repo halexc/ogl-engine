@@ -25,7 +25,11 @@ public:
 	void loadScene(const aiScene * scene, bool ambientFromDiffuse);
 
 	MaterialManager * getMaterialManager();
+
+	int getNumEntities();
 	Entity3D * getEntity3D(unsigned int i);
+
+	int getNumCameras();
 	Camera * getCamera(unsigned int i);
 	
 	unsigned int addCamera(Camera * c);

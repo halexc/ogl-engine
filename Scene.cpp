@@ -117,9 +117,19 @@ MaterialManager * Scene::getMaterialManager()
 	return matManager;
 }
 
+int Scene::getNumEntities()
+{
+	return models.size();
+}
+
 Entity3D * Scene::getEntity3D(unsigned int i)
 {
 	return models.at(i);
+}
+
+int Scene::getNumCameras()
+{
+	return cameras.size();
 }
 
 Camera * Scene::getCamera(unsigned int i)
