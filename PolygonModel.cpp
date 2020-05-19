@@ -3,6 +3,7 @@
 PolygonModel::PolygonModel()
 {
 	mat = new Material();
+	customMat = true;
 }
 
 PolygonModel::PolygonModel(aiMesh * mesh)
@@ -11,28 +12,78 @@ PolygonModel::PolygonModel(aiMesh * mesh)
 	loadVertices(mesh->mVertices, mesh->mNormals, mesh->mTextureCoords[0], mesh->mColors[0], mesh->mTangents, mesh->mBitangents, mesh->mNumVertices);
 	loadFaces(mesh->mFaces, mesh->mNumFaces);
 
+	mat = NULL;
+
 	setupBuffers();
 }
 
 PolygonModel::PolygonModel(aiMesh * mesh, aiMaterial * mat) : PolygonModel(mesh)
 {
 	this->mat = new Material(mat);
+	customMat = true;
 }
 
 PolygonModel::PolygonModel(aiMesh * mesh, Material * mat) : PolygonModel(mesh)
 {
 	this->mat = mat;
+	customMat = false;
 }
 
 PolygonModel::PolygonModel(aiMesh * mesh, aiMaterial * mat, MaterialManager * matManager) : PolygonModel(mesh)
 {
 	this->mat = matManager->getMaterial(mat->GetName().C_Str());
+	customMat = false;
 }
 
 PolygonModel::~PolygonModel()
 {
+	if (customMat && this->mat != NULL) delete this->mat;
 	vertices.clear();
 	indices.clear();
+}
+
+PolygonModel * PolygonModel::createQuad()
+{
+	PolygonModel * res = new PolygonModel();
+
+	res->name = "Plane";
+
+	Vertex v;
+	v.color = glm::fvec4(1.0f, 1.0f, 1.0f, 1.0f);
+	v.normal = glm::fvec3(0.0f, 1.0f, 0.0f);
+	v.tangent = glm::fvec3(1.0f, 0.0f, 0.0f);
+	v.bitangent = glm::fvec3(0.0f, 0.0f, 1.0f);
+
+	// Bottom-left vertex (0)
+	v.position = glm::fvec3(-1.0f, -1.0f, 0.0f);
+	v.uv = glm::fvec2(0.0f, 0.0f);
+	res->vertices.push_back(v);
+
+	// Bottom-right vertex (1)
+	v.position = glm::fvec3(1.0f, -1.0f, 0.0f);
+	v.uv = glm::fvec2(1.0f, 0.0f);
+	res->vertices.push_back(v);
+
+	// Upper-right vertex (2)
+	v.position = glm::fvec3(1.0f, 1.0f, 0.0f);
+	v.uv = glm::fvec2(1.0f, 1.0f);
+	res->vertices.push_back(v);
+
+	// Upper-left vertex (3)
+	v.position = glm::fvec3(-1.0f, 1.0f, 0.0f);
+	v.uv = glm::fvec2(0.0f, 1.0f);
+	res->vertices.push_back(v);
+
+	res->indices.push_back(0);
+	res->indices.push_back(1);
+	res->indices.push_back(2);
+	res->indices.push_back(0);
+	res->indices.push_back(2);
+	res->indices.push_back(3);
+
+	res->setupBuffers();
+
+	return res;
 }
 
 void PolygonModel::draw()
@@ -46,18 +97,15 @@ void PolygonModel::draw(Material * mat)
 		std::cerr << "PolygonModel.cpp: ERROR while drawing. No Material available. Drawing process aborted..." << std::endl;
 		return;
 	}
+	Shader * s = mat->getShader();
 
-	mat->prepare();
-
-	draw(mat->getShader());
-}
-
-void PolygonModel::draw(Shader * s)
-{
 	if (s == NULL) {
 		std::cerr << "PolygonModel.cpp: ERROR while drawing. No Shader available. Drawing process aborted..." << std::endl;
 		return;
 	}
+
+	mat->prepare(s);
+
 	if (getTransform()) s->setMat4("model", getTransform()->getTransform());
 	else s->setMat4("model", glm::fmat4(1.0f));
 
@@ -74,9 +122,60 @@ void PolygonModel::draw(Shader * s)
 	glBindVertexArray(0);
 }
 
-void PolygonModel::setMaterial(Material * mat)
+void PolygonModel::draw(Shader * s)
 {
+	if (s == NULL) {
+		std::cerr << "PolygonModel.cpp: ERROR while drawing. No Shader available. Drawing process aborted..." << std::endl;
+		return;
+	}
+	if (mat == NULL) {
+		std::cerr << "PolygonModel.cpp: ERROR while drawing. No Material available. Drawing process aborted..." << std::endl;
+		return;
+	}
+	mat->prepare(s);
+
+	if (getTransform()) s->setMat4("model", getTransform()->getTransform());
+	else s->setMat4("model", glm::fmat4(1.0f));
+
+	if (!valid) {
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		//Array buffer for all vertices:
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+		valid = true;
+	}
+
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
+bool PolygonModel::castsShadows()
+{
+	return shadows;
+}
+
+bool PolygonModel::castsShadows(bool castShadow)
+{
+	shadows = castShadow;
+	return shadows;
+}
+
+bool PolygonModel::isMaterialUnique()
+{
+	return customMat;
+}
+
+void PolygonModel::setMaterialUnique(bool unique)
+{
+	customMat = unique;
+}
+
+void PolygonModel::setMaterial(Material * mat, bool unique)
+{
+	if (customMat && this->mat != NULL) delete this->mat;
 	this->mat = mat;
+	customMat = unique;
 }
 
 Material * PolygonModel::getMaterial()

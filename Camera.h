@@ -20,6 +20,7 @@ public:
 	void setView(glm::fmat4 view);
 	void lookAt(glm::fvec3 eye, glm::fvec3 tgt, glm::fvec3 up);
 	Transform3D * getTransform();
+	glm::fvec3 getLookDir(glm::fvec3 up = glm::fvec3(0.0f, 1.0f, 0.0f));
 
 	void translate(glm::fvec3 v);
 	void translate(float x, float y, float z);

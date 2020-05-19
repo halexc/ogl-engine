@@ -15,17 +15,26 @@ public:
 	Entity3D();
 	~Entity3D();
 
+	static Entity3D * createQuad();
+
 	void update(double delta);
 	void draw();
 
 	Transform3D * getTransform();
 
 	void addComponent(Component * c);
-	
+	Component * getComponent(unsigned int i);
+	unsigned int getNumComponents();
+
+	Component * removeComponent(unsigned int i);
+	Component * removeComponent(Component * c);
+	void deleteComponents();
+
+
 	template <typename T>
 	T * getComponent() {
 		for (Component * c : components) {
-			if (T * ret = dynamic_cast<T*>(c)) 
+			if (T * ret = dynamic_cast<T*>(c))
 				return ret;
 		}
 		return NULL;
@@ -55,13 +64,6 @@ public:
 		}
 		return ret;
 	}
-
-	Component * getComponent(unsigned int i);
-	unsigned int getNumComponents();
-
-	Component * removeComponent(unsigned int i);
-	Component * removeComponent(Component * c);
-	void deleteComponents();
 
 };
 

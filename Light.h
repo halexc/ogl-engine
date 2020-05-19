@@ -3,7 +3,10 @@
 #include <glm\glm.hpp>
 #include "Shader.h"
 
-#define MAX_NUM_LIGHTS 16
+#define MAX_NUM_POINT_LIGHTS 16
+#define MAX_NUM_DIR_LIGHTS 4
+
+#define DEBUG_LIGHTS 1
 
 class Scene;
 
@@ -32,12 +35,15 @@ protected:
 	GLuint FBO = 0;
 	GLuint texFBO = 0;
 
-	void drawShadows(Scene * scene, Shader * depthShader, glm::fmat4 projection);
+	void drawShadowMapDirectional(Scene * scene, Shader * depthShader, glm::fmat4 projection);
 
 	glm::fvec3 color;
 	float intensity;
+	unsigned int shadowWidth, shadowHeight;
+
 };
 
+// Light that is emitted equally in all directions, originating in a single point
 class PointLight : public Light
 {
 public:
@@ -57,7 +63,7 @@ protected:
 };
 
 // Light that is not emitted from a point but rather illuminates the scene from a certain direction
-class DirectionalLight : public PointLight
+class DirectionalLight : public Light
 {
 public:
 	DirectionalLight();
@@ -68,11 +74,17 @@ public:
 	void setDirection(float x, float y, float z);
 	glm::fvec3 getDirection();
 
+	void setAmbientIntensity(float f);
+	float getAmbientIntensity();
+
 	virtual void configureShader(Shader * s, unsigned int i);
 	virtual void drawShadows(Scene * scene, Shader * depthShader);
 
 protected:
 	glm::fvec3 direction;
+	float ambientIntesity = 0.2f;
+
+	glm::fmat4 lightSpace = glm::fmat4(1.0f);
 };
 
 // Directional Light, but with attenuation

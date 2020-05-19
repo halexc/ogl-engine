@@ -34,12 +34,19 @@ public:
 	PolygonModel(aiMesh * mesh, aiMaterial * mat, MaterialManager * matManager);
 	~PolygonModel();
 
+	static PolygonModel * createQuad();
+
 	virtual void update(double delta) {};
 	virtual void draw();
 	virtual void draw(Material * mat);
 	virtual void draw(Shader * s);
 
-	void setMaterial(Material * mat);
+	bool castsShadows();
+	bool castsShadows(bool castShadow);
+
+	bool isMaterialUnique();
+	void setMaterialUnique(bool unique = true);
+	void setMaterial(Material * mat, bool unique = false);
 	Material * getMaterial();
 
 	void setName(std::string name);
@@ -49,10 +56,13 @@ public:
 	void deleteResources();
 
 private:
+	bool shadows = true;
+
 	GLuint VAO, VBO, EBO;
 	bool valid = false;
 	void setupBuffers();
 
+	bool customMat;
 	Material * mat;
 	std::string name;
 

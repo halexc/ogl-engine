@@ -27,10 +27,15 @@ public:
 	MaterialManager * getMaterialManager();
 
 	int getNumEntities();
+	unsigned int addEntity3D(Entity3D * e);
 	Entity3D * getEntity3D(unsigned int i);
 
 	int getNumCameras();
+	unsigned int getActiveCameraIndex();
+	Camera * getCamera();
 	Camera * getCamera(unsigned int i);
+	void setActiveCamera(unsigned int i);
+	void setActiveCamera(Camera * c);
 	
 	unsigned int addCamera(Camera * c);
 	unsigned int addMesh(PolygonModel * mesh);

@@ -5,20 +5,26 @@
 Light::Light()
 {
 	castShadows = true;
-	Utils::GenerateDepthFBO(&FBO, &texFBO, 1024, 1024);
+	shadowWidth = 1024;
+	shadowHeight = 1024;
+	Utils::GenerateDepthFBO(&FBO, &texFBO, shadowWidth, shadowHeight);
 }
 
 Light::Light(unsigned int width, unsigned int height)
 {
 	castShadows = true;
-	Utils::GenerateDepthFBO(&FBO, &texFBO, width, height);
+	shadowWidth = width;
+	shadowHeight = height;
+	Utils::GenerateDepthFBO(&FBO, &texFBO, shadowWidth, shadowHeight);
 }
 
 Light::Light(bool shadows, unsigned int width, unsigned int height)
 {
 	castShadows = shadows;
+	shadowWidth = width;
+	shadowHeight = height;
 	if (castShadows) {
-		Utils::GenerateDepthFBO(&FBO, &texFBO, width, height);
+		Utils::GenerateDepthFBO(&FBO, &texFBO, shadowWidth, shadowHeight);
 	}
 }
 
@@ -60,28 +66,39 @@ float Light::getIntensity()
 	return intensity;
 }
 
-void Light::drawShadows(Scene * scene, Shader * depthShader, glm::fmat4 projection)
+void Light::drawShadowMapDirectional(Scene * scene, Shader * depthShader, glm::fmat4 projection)
 {
+
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
 	GLint fboReadOld, fboDrawOld;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboDrawOld);
 	glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &fboReadOld);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
-	glClear(GL_DEPTH_BUFFER_BIT);
-
+	glCullFace(GL_FRONT);
+	
 	depthShader->use();
-	depthShader->setMat4("lightSpace", projection);
+	depthShader->setMat4("projectionView", projection);
+
+	glViewport(0, 0, shadowWidth, shadowHeight);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	for (int i = 0; i < scene->getNumEntities(); i++) {
 		if (PolygonModel * model = scene->getEntity3D(i)->getComponent<PolygonModel>()) {
-			model->draw(depthShader);
+			if(model->castsShadows()) 
+				model->draw(depthShader);
 		}
 	}
 
 	// Reset state:
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboDrawOld);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fboReadOld);
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+	glCullFace(GL_BACK);
 }
 
 PointLight::PointLight() : Light()
@@ -115,11 +132,12 @@ glm::fvec3 PointLight::getPosition()
 
 void PointLight::configureShader(Shader * s, unsigned int i)
 {
-	if (i >= MAX_NUM_LIGHTS) {
+	s->use();
+	if (i >= MAX_NUM_POINT_LIGHTS) {
 		std::cerr << "Light.cpp: Unable to configure shader. MAX_NUM_LIGHTS exceeded." << std::endl;
 		return;
 	}
-	std::string pLight = "light[";
+	std::string pLight = "pLight[";
 	pLight.append(std::to_string(i));
 	pLight.append("]");
 	std::string tmp(pLight);
@@ -134,26 +152,26 @@ void PointLight::drawShadows(Scene * scene, Shader * depthShader)
 {
 }
 
-DirectionalLight::DirectionalLight() : PointLight()
+DirectionalLight::DirectionalLight() : Light(2048U, 2048U)
 {
 }
 
-DirectionalLight::DirectionalLight(unsigned int width, unsigned int height) : PointLight(width, height)
+DirectionalLight::DirectionalLight(unsigned int width, unsigned int height) : Light(width, height)
 {
 }
 
-DirectionalLight::DirectionalLight(bool shadows, unsigned int width, unsigned int height) : PointLight(shadows, width, height)
+DirectionalLight::DirectionalLight(bool shadows, unsigned int width, unsigned int height) : Light(shadows, width, height)
 {
 }
 
 void DirectionalLight::setDirection(glm::fvec3 dir)
 {
-	direction = dir;
+	direction = glm::normalize(dir);
 }
 
 void DirectionalLight::setDirection(float x, float y, float z)
 {
-	direction = glm::fvec3(x, y, z);
+	direction = glm::normalize(glm::fvec3(x, y, z));
 }
 
 glm::fvec3 DirectionalLight::getDirection()
@@ -161,12 +179,53 @@ glm::fvec3 DirectionalLight::getDirection()
 	return direction;
 }
 
+void DirectionalLight::setAmbientIntensity(float f)
+{
+	ambientIntesity = f;
+}
+
+float DirectionalLight::getAmbientIntensity()
+{
+	return ambientIntesity;
+}
+
 void DirectionalLight::configureShader(Shader * s, unsigned int i)
 {
+	s->use();
+	if (i >= MAX_NUM_DIR_LIGHTS) {
+		std::cerr << "Light.cpp: Unable to configure shader. MAX_NUM_LIGHTS exceeded." << std::endl;
+		return;
+	}
+	std::string pLight = "dLight[";
+	pLight.append(std::to_string(i));
+	pLight.append("]");
+	std::string tmp(pLight);
+	s->setVec3(tmp.append(".dir"), direction);
+	tmp = pLight;
+	s->setVec3(tmp.append(".color"), color);
+	tmp = pLight;
+	s->setFloat(tmp.append(".intensity"), intensity);
+	tmp = pLight;
+	s->setFloat(tmp.append(".ambientIntensity"), ambientIntesity);
+
+	if (castShadows) {
+		tmp = pLight;
+		s->setMat4(tmp.append(".lightSpace"), lightSpace);
+
+		tmp = pLight;
+		s->setInt(tmp.append(".shadowMap"), 5);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, texFBO);
+	}
 }
 
 void DirectionalLight::drawShadows(Scene * scene, Shader * depthShader)
 {
+	Camera * c = scene->getCamera();
+	glm::fvec3 lightPos =  - 7.5f * direction;
+	lightSpace = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.0625f, 10.0f) * glm::lookAt(lightPos, lightPos + direction, glm::fvec3(0.0f, 1.0f, 0.0f));
+
+	drawShadowMapDirectional(scene, depthShader, lightSpace);
 }
 
 Flashlight::Flashlight() : DirectionalLight()

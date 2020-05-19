@@ -6,7 +6,7 @@
 
 Camera::Camera()
 {
-	setProjection(glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.125f, 100.0f));
+	setProjection(glm::perspective(glm::radians(60.0f), 16.0f / 9.0f, 0.125f, 128.0f));
 	lookAt(glm::fvec3(0.0f, 0.5f, 3.0f), glm::fvec3(0.0f, 0.0f, 0.0f), glm::fvec3(0.0f, 1.0f, 0.0f));
 }
 
@@ -28,7 +28,7 @@ void Camera::setProjection(glm::fmat4 projection)
 
 void Camera::setProjection(float rad, float aspectRatio)
 {
-	projection = glm::perspective(rad, aspectRatio, 0.1f, 100.0f);
+	projection = glm::perspective(rad, aspectRatio, 0.125f, 128.0f);
 }
 
 void Camera::setProjection(float rad, float aspectRatio, float zNear, float zFar)
@@ -54,6 +54,10 @@ void Camera::lookAt(glm::fvec3 eye, glm::fvec3 tgt, glm::fvec3 up)
 Transform3D * Camera::getTransform()
 {
 	return &transform;
+}
+glm::fvec3 Camera::getLookDir(glm::fvec3 up)
+{
+	return -transform.getForward();
 }
 void Camera::translate(glm::fvec3 v)
 {

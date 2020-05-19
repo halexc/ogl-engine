@@ -25,7 +25,8 @@ GLFWwindow * window;
 int windowWidth = 1280, windowHeight = 720;
 double delta;
 bool running = true;
-bool debugDrawing = false;
+bool debugGrid = false;
+bool debugDepth = false;
 
 bool cameraInit = false;
 
@@ -186,7 +187,7 @@ int main(void) {
 	Scene * scene;
 	//if (const aiScene* sn = importer.ReadFile("res\\multipleObjects_smooth.obj", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
 	//if (const aiScene* sn = importer.ReadFile("res\\cube.obj", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
-	if (const aiScene* sn = importer.ReadFile("res\\Pool.fbx", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
+	if (const aiScene* sn = importer.ReadFile("res\\Pool2.fbx", aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_ValidateDataStructure)) {
 		scene = new Scene(sn, true);
 		std::cout << "File loaded." << std::endl;
 	}
@@ -194,37 +195,61 @@ int main(void) {
 		std::cerr << importer.GetErrorString() << std::endl;
 		return 0;
 	}
-	Shader shaderGrid = Shader("Shader\\shaderGrid.vs", "Shader\\shaderGrid.fs");
+	Shader * shaderGrid = new Shader("Shader\\shaderGrid.vs", "Shader\\shaderGrid.fs");
+	scene->getMaterialManager()->addShader("gridShader", shaderGrid);
+	Shader * shaderDebug = new Shader("Shader\\depthShader_DEBUG.vs", "Shader\\depthShader_DEBUG.fs");
+	scene->getMaterialManager()->addShader("depthDebug", shaderDebug);
+
+	Entity3D * quad = Entity3D::createQuad();
+	quad->getComponent<PolygonModel>()->getMaterial()->setShader(scene->getMaterialManager()->getShader("depthDebug"));
+	quad->getComponent<PolygonModel>()->getMaterial()->setColorSpecular(0.0f, 0.0f, 0.0f);
+	quad->getComponent<PolygonModel>()->getMaterial()->setTexAmbient(20);
+	quad->getComponent<PolygonModel>()->getMaterial()->setTexDiffuse(20);
+	quad->getComponent<PolygonModel>()->castsShadows(false);
+
+	quad->getTransform()->translate(0.0f, 0.0f, -1.5f);
+
+	//scene->addEntity3D(quad);
 	
-	PointLight * l = new PointLight();
-	l->setPosition(0.0f, -1.0f, 0.0f);
+	DirectionalLight * dl = new DirectionalLight(16384U, 16384U);
+	dl->setDirection(-1.7f, -3.0f, -0.7f);
+	dl->setIntensity(2.5f);
+	dl->setAmbientIntensity(0.0125f);
+	dl->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
+	scene->addLight(dl);
+	/*
+	PointLight * l;
+	
+	l = new PointLight();
+	l->setPosition(0.0f, -2.0f, 0.0f);
 	l->setIntensity(1.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(l);
-
+	
 	l = new PointLight();
 	l->setPosition(5.0f, 2.5f, 0.5f);
-	l->setIntensity(5.0f);
+	l->setIntensity(2.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(l);
 
 	l = new PointLight();
 	l->setPosition(2.5f, 2.5f, 2.5f);
-	l->setIntensity(5.0f);
+	l->setIntensity(2.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(l);
 
 	l = new PointLight();
 	l->setPosition(0.0f, 2.5f, 5.0f);
-	l->setIntensity(5.0f);
+	l->setIntensity(2.0f);
 	l->setColor(glm::fvec3(1.0f, 1.0f, 0.0f));
 	scene->addLight(l);
-	
+	*/
 	double time = glfwGetTime();
 	double oldTime = time;
 	int fps = 0, fps_counter = 0;
 
 	c = scene->getCamera(0);
+	//c->setProjection(glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.125f, 10.0f));
 
 	while (running) {
 		if (glfwWindowShouldClose(window)) {
@@ -246,10 +271,16 @@ int main(void) {
 
 		scene->draw();
 
-		if (debugDrawing) {
-			drawAxises(&shaderGrid);
-			drawGrid(&shaderGrid);
+		if (debugGrid) {
+			drawAxises(scene->getMaterialManager()->getShader("gridShader"));
+			drawGrid(scene->getMaterialManager()->getShader("gridShader"));
+
 		}
+		if (debugDepth) {
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			quad->getComponent<PolygonModel>()->draw();
+		}
+
 
 		// Swap buffers:
 		glfwSwapBuffers(window);
@@ -260,7 +291,7 @@ int main(void) {
 		// Handle input:
 		inputHandling();
 
-		/*
+		
 		fps_counter++;
 		if (time - oldTime > 1) {
 			fps = fps_counter / (time - oldTime);
@@ -268,16 +299,16 @@ int main(void) {
 			fps_counter = 0;
 			oldTime = time;
 
-			glm::fvec3 camPos = c->getTransform()->getPosition();
-			std::cout << "Position: x=" << camPos.x << ", y=" << camPos.y << ", z=" << camPos.z << std::endl;
-			glm::fvec3 camVec = c->getTransform()->getRight();
-			std::cout << "Right(Local X)-Vector: ( " << camVec.x << ",  " << camVec.y << ", " << camVec.z << ")" << std::endl;
-			camVec = c->getTransform()->getUp();
-			std::cout << "Up(Local Y)-Vector: ( " << camVec.x << ",  " << camVec.y << ", " << camVec.z << ")" << std::endl;
-			camVec = c->getTransform()->getForward();
-			std::cout << "Forward(Local Z)-Vector: ( " << camVec.x << ",  " << camVec.y << ", " << camVec.z << ")" << std::endl;
+			//glm::fvec3 camPos = c->getTransform()->getPosition();
+			//std::cout << "Position: x=" << camPos.x << ", y=" << camPos.y << ", z=" << camPos.z << std::endl;
+			//glm::fvec3 camVec = c->getTransform()->getRight();
+			//std::cout << "Right(Local X)-Vector: ( " << camVec.x << ",  " << camVec.y << ", " << camVec.z << ")" << std::endl;
+			//camVec = c->getTransform()->getUp();
+			//std::cout << "Up(Local Y)-Vector: ( " << camVec.x << ",  " << camVec.y << ", " << camVec.z << ")" << std::endl;
+			//glm::fvec3 camVec = c->getTransform()->getForward();
+			//std::cout << "Forward(Local Z)-Vector: ( " << camVec.x << ",  " << camVec.y << ", " << camVec.z << ")" << std::endl;
 		}
-		*/
+		
 	}
 
 	delete scene;
@@ -295,19 +326,22 @@ void inputHandling() {
 	if (inputHandler->isCtrlDown()) d = delta * 2;
 
 	if (inputHandler->getKeyState(GLFW_KEY_UP) & INPUT_HOLD || inputHandler->getKeyState(GLFW_KEY_W) & INPUT_HOLD) {
-		c->getTransform()->translateOriented(glm::fvec3(0.0f, 0.0f, -float(d) * 4.0f));
+		c->getTransform()->translateOriented(glm::fvec3(0.0f, 0.0f, -float(d) * 2.0f));
 	}
 	if (inputHandler->getKeyState(GLFW_KEY_DOWN) & INPUT_HOLD || inputHandler->getKeyState(GLFW_KEY_S) & INPUT_HOLD) {
-		c->getTransform()->translateOriented(glm::fvec3(0.0f, 0.0f, float(d) * 4.0f));
+		c->getTransform()->translateOriented(glm::fvec3(0.0f, 0.0f, float(d) * 2.0f));
 	}
 	if (inputHandler->getKeyState(GLFW_KEY_LEFT) & INPUT_HOLD || inputHandler->getKeyState(GLFW_KEY_A) & INPUT_HOLD) {
-		c->getTransform()->translateOriented(glm::fvec3(-float(d) * 4.0f, 0.0f, 0.0f));
+		c->getTransform()->translateOriented(glm::fvec3(-float(d) * 2.0f, 0.0f, 0.0f));
 	}
 	if (inputHandler->getKeyState(GLFW_KEY_RIGHT) & INPUT_HOLD || inputHandler->getKeyState(GLFW_KEY_D) & INPUT_HOLD) {
-		c->getTransform()->translateOriented(glm::fvec3(float(d) * 4.0f, 0.0f, 0.0f));
+		c->getTransform()->translateOriented(glm::fvec3(float(d) * 2.0f, 0.0f, 0.0f));
 	}
 	if (inputHandler->getKeyState(GLFW_KEY_F1) & INPUT_PRESSED) {
-		debugDrawing = !debugDrawing;
+		debugGrid = !debugGrid;
+	}
+	if (inputHandler->getKeyState(GLFW_KEY_F2) & INPUT_PRESSED) {
+		debugDepth = !debugDepth;
 	}
 
 	if (inputHandler->getKeyState(GLFW_KEY_1) & INPUT_PRESSED) {

@@ -1,5 +1,5 @@
 #include "Entity3D.h"
-
+#include "PolygonModel.h"
 
 
 Entity3D::Entity3D()
@@ -12,6 +12,14 @@ Entity3D::~Entity3D()
 	for (Component * c : components)
 		delete c;
 	components.clear();
+}
+
+Entity3D * Entity3D::createQuad()
+{
+	Entity3D * res = new Entity3D();
+	res->addComponent(PolygonModel::createQuad());
+
+	return res;
 }
 
 void Entity3D::update(double delta)

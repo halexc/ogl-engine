@@ -122,6 +122,21 @@ int Scene::getNumEntities()
 	return models.size();
 }
 
+unsigned int Scene::addEntity3D(Entity3D * e)
+{
+	if (PolygonModel * m = e->getComponent<PolygonModel>()) {
+		if (m->getMaterial()->getShader()) {
+			matManager->addMaterial(m->getMaterial());
+			m->setMaterialUnique(false);
+		}
+		else {
+			m->setMaterial(matManager->getMaterial("default"));
+		}
+	}
+	models.push_back(e);
+	return models.size() - 1;
+}
+
 Entity3D * Scene::getEntity3D(unsigned int i)
 {
 	return models.at(i);
@@ -132,13 +147,47 @@ int Scene::getNumCameras()
 	return cameras.size();
 }
 
+unsigned int Scene::getActiveCameraIndex()
+{
+	return activeCamera;
+}
+
+Camera * Scene::getCamera()
+{
+	return cameras.at(activeCamera);
+}
+
 Camera * Scene::getCamera(unsigned int i)
 {
+	if (i >= cameras.size()) return NULL;
 	return cameras.at(i);
+}
+
+void Scene::setActiveCamera(unsigned int i)
+{
+	if (i >= cameras.size()) {
+		std::cerr << "Scene.cpp: Error when trying to assign active camera. Index exceeds number of cameras." << std::endl;
+		i = 0;
+	}
+	activeCamera = i;
+}
+
+void Scene::setActiveCamera(Camera * c)
+{
+	if (c == NULL) { 
+		activeCamera = 0; 
+		return;
+	}
+	activeCamera = addCamera(c);
 }
 
 unsigned int Scene::addCamera(Camera * c)
 {
+	if (c == NULL) return 0;
+	std::vector<Camera *>::iterator it = std::find(cameras.begin(), cameras.end(), c);
+	if (it != cameras.end()) {
+		return std::distance(cameras.begin(), it);
+	}
 	cameras.push_back(c);
 	return(cameras.size() - 1);
 }
@@ -161,11 +210,22 @@ void Scene::draw()
 {
 	matManager->updateShaders(cameras[activeCamera]);
 
+	unsigned int nPointLights = 0;
+	unsigned int nDirLights = 0;
+
+	// Calculate shadows
+	for (unsigned int i = 0; i < lights.size(); i++)
+		if (lights[i]->castsShadows()) lights[i]->drawShadows(this, matManager->getShader("depthShader"));
+
 	for (std::map<std::string, Shader *>::iterator it = matManager->getShaders()->begin(); it != matManager->getShaders()->end(); it++) {
 		for (unsigned int i = 0; i < lights.size(); i++) {
 			lights[i]->configureShader((*it).second, i);
+
+			if (dynamic_cast<PointLight*>(lights[i])) nPointLights++;
+			else if (dynamic_cast<DirectionalLight*>(lights[i])) nDirLights++;
 		}
-		(*it).second->setInt("nrLights", lights.size());
+		(*it).second->setInt("nPointLights", nPointLights);
+		(*it).second->setInt("nDirLights", nDirLights);
 	}
 
 	for (Entity3D * entity : models) {

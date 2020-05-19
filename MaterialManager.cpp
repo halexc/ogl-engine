@@ -4,14 +4,14 @@
 MaterialManager::MaterialManager()
 {
 	//Create a default shader to use whenever no shader is available
-	Shader * shader = new Shader("Shader\\basicShader.vs", "Shader\\basicShader.fs");
-	shaders.insert(std::pair<std::string, Shader *>("default", shader));
+	addShader("default", new Shader("Shader\\basicShader.vs", "Shader\\basicShader.fs"));
+	addShader("depthShader", new Shader("Shader\\depthShader.vs", "Shader\\depthShader.fs"));
 
 	//Create a default material to use when no other material is specified
 	Material * defaultMat = new Material();
 	defaultMat->setColorAmbient(0.75f, 0.75f, 0.75f);
 	defaultMat->setColorDiffuse(0.75f, 0.75f, 0.75f);
-	defaultMat->setShader(shader);
+	defaultMat->setShader(getShader("default"));
 
 	materials.insert(std::pair<std::string, Material *>("default", defaultMat));
 	textureAtlas.insert(std::pair<std::string, GLuint>("white", texWhite));
@@ -138,7 +138,7 @@ Shader * MaterialManager::getShader(std::string name)
 {
 	if(shaders.count(name))
 		return shaders.at(name);
-	std::cerr << "MaterialManager.cpp: ERROR when retrieving shader. No such material was found. Returning default shader instead..." << std::endl;
+	std::cerr << "MaterialManager.cpp: ERROR when retrieving shader. No such shader was found. Returning default shader instead..." << std::endl;
 	return shaders.at("default");
 }
 

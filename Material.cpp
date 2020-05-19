@@ -209,7 +209,15 @@ void Material::loadFromAiMaterial_wAmbientFromDiffuse(aiMaterial * mat)
 
 void Material::prepare()
 {
-	if (!shader) return;
+	prepare(shader);
+}
+
+void Material::prepare(Shader * shader)
+{
+	if (!shader) {
+		std::cerr << "Material.cpp: ERROR while preparing shader. No Shader available..." << std::endl;
+		return;
+	}
 	shader->use();
 
 	shader->setInt("mat.texAmbient", 0);
@@ -243,11 +251,14 @@ void Material::prepare()
 
 	// Set up texture samplers
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texAmbient);
+	if (texAmbient) glBindTexture(GL_TEXTURE_2D, texAmbient);
+	else glBindTexture(GL_TEXTURE_2D, defaultTex);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texDiffuse);
+	if (texDiffuse) glBindTexture(GL_TEXTURE_2D, texDiffuse);
+	else glBindTexture(GL_TEXTURE_2D, defaultTex);
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, texSpecular);
+	if (texSpecular) glBindTexture(GL_TEXTURE_2D, texSpecular);
+	else glBindTexture(GL_TEXTURE_2D, defaultTex);
 }
 
 void Material::setColorAmbient(glm::fvec3 color)

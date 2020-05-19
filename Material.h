@@ -41,6 +41,9 @@ public:
 
 	// Prepares the shader for drawing by loading the material data. 
 	virtual void prepare();
+	// Prepares the shader for drawing by loading the material data. Instead of using the
+	// material's standard shader however, the specified shader is used.
+	virtual void prepare(Shader * shader);
 
 	// Set the ambient color (RGB-vector)
 	void setColorAmbient(glm::fvec3 color);
@@ -100,8 +103,6 @@ public:
 	Shader * getShader();
 
 private:
-
-
 	std::string name;
 
 	glm::fvec3 colorAmbient;
