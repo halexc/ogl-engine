@@ -27,6 +27,8 @@ public:
 	void setIntensity(float i);
 	float getIntensity();
 
+	GLuint getShadowMap();
+
 	virtual void configureShader(Shader * s, unsigned int i) = 0;
 	virtual void drawShadows(Scene * scene, Shader * depthShader) = 0;
 
@@ -34,7 +36,8 @@ protected:
 	bool castShadows;
 	GLuint FBO = 0;
 	GLuint texFBO = 0;
-
+	
+	bool generateShadowTexArray(unsigned int width, unsigned int height);
 	void drawShadowMapDirectional(Scene * scene, Shader * depthShader, glm::fmat4 projection);
 
 	glm::fvec3 color;

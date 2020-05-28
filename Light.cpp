@@ -66,6 +66,42 @@ float Light::getIntensity()
 	return intensity;
 }
 
+GLuint Light::getShadowMap()
+{
+	return texFBO;
+}
+
+bool Light::generateShadowTexArray(unsigned int width, unsigned int height)
+{
+	GLint framebufferOld;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebufferOld);
+
+	// Create Framebuffer Object.
+	glGenFramebuffers(1, &FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
+	// Create Texture.
+	glGenTextures(1, &texFBO);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, texFBO);
+	glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT, width, height, 3 * MAX_NUM_DIR_LIGHTS);
+	// Configure Texture.
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texFBO, 0, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, framebufferOld);
+	return true;
+}
+
 void Light::drawShadowMapDirectional(Scene * scene, Shader * depthShader, glm::fmat4 projection)
 {
 
@@ -84,6 +120,7 @@ void Light::drawShadowMapDirectional(Scene * scene, Shader * depthShader, glm::f
 	glViewport(0, 0, shadowWidth, shadowHeight);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texFBO, 0);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	for (int i = 0; i < scene->getNumEntities(); i++) {
@@ -213,8 +250,8 @@ void DirectionalLight::configureShader(Shader * s, unsigned int i)
 		s->setMat4(tmp.append(".lightSpace"), lightSpace);
 
 		tmp = pLight;
-		s->setInt(tmp.append(".shadowMap"), 5);
-		glActiveTexture(GL_TEXTURE5);
+		s->setInt(tmp.append(".shadowMap"), 5 + i);
+		glActiveTexture(GL_TEXTURE5 + i);
 		glBindTexture(GL_TEXTURE_2D, texFBO);
 	}
 }
@@ -222,8 +259,8 @@ void DirectionalLight::configureShader(Shader * s, unsigned int i)
 void DirectionalLight::drawShadows(Scene * scene, Shader * depthShader)
 {
 	Camera * c = scene->getCamera();
-	glm::fvec3 lightPos =  - 7.5f * direction;
-	lightSpace = glm::ortho(-15.0f, 15.0f, -15.0f, 15.0f, 0.0625f, 10.0f) * glm::lookAt(lightPos, lightPos + direction, glm::fvec3(0.0f, 1.0f, 0.0f));
+	glm::fvec3 lightPos =  - 6.0f * direction;
+	lightSpace = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.0625f, 9.0f) * glm::lookAt(lightPos, lightPos + direction, glm::fvec3(0.0f, 1.0f, 0.0f));
 
 	drawShadowMapDirectional(scene, depthShader, lightSpace);
 }

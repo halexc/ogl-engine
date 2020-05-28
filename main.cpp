@@ -195,26 +195,36 @@ int main(void) {
 		std::cerr << importer.GetErrorString() << std::endl;
 		return 0;
 	}
+	glm::fmat4 testMat = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.0f, 10.0f);
+
 	Shader * shaderGrid = new Shader("Shader\\shaderGrid.vs", "Shader\\shaderGrid.fs");
 	scene->getMaterialManager()->addShader("gridShader", shaderGrid);
 	Shader * shaderDebug = new Shader("Shader\\depthShader_DEBUG.vs", "Shader\\depthShader_DEBUG.fs");
 	scene->getMaterialManager()->addShader("depthDebug", shaderDebug);
 
+	DirectionalLight * dl = new DirectionalLight(4096U, 4096U);
+	dl->setDirection(-1.7f, -2.5f, -1.7f);
+	dl->setIntensity(2.0f);
+	dl->setAmbientIntensity(0.25f);
+	dl->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
+	scene->addLight(dl);
+
 	Entity3D * quad = Entity3D::createQuad();
 	quad->getComponent<PolygonModel>()->getMaterial()->setShader(scene->getMaterialManager()->getShader("depthDebug"));
 	quad->getComponent<PolygonModel>()->getMaterial()->setColorSpecular(0.0f, 0.0f, 0.0f);
-	quad->getComponent<PolygonModel>()->getMaterial()->setTexAmbient(20);
-	quad->getComponent<PolygonModel>()->getMaterial()->setTexDiffuse(20);
+	quad->getComponent<PolygonModel>()->getMaterial()->setTexAmbient(dl->getShadowMap());
+	quad->getComponent<PolygonModel>()->getMaterial()->setTexDiffuse(dl->getShadowMap());
 	quad->getComponent<PolygonModel>()->castsShadows(false);
 
 	quad->getTransform()->translate(0.0f, 0.0f, -1.5f);
 
 	//scene->addEntity3D(quad);
 	
-	DirectionalLight * dl = new DirectionalLight(16384U, 16384U);
-	dl->setDirection(-1.7f, -3.0f, -0.7f);
-	dl->setIntensity(2.5f);
-	dl->setAmbientIntensity(0.0125f);
+
+	/*dl = new DirectionalLight(4096U, 4096U);
+	dl->setDirection(1.7f, -3.0f, -1.7f);
+	dl->setIntensity(1.0f);
+	dl->setAmbientIntensity(0.125f);
 	dl->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(dl);
 	/*
@@ -244,6 +254,8 @@ int main(void) {
 	l->setColor(glm::fvec3(1.0f, 1.0f, 0.0f));
 	scene->addLight(l);
 	*/
+	glClearColor(0.5f, 0.75f, 0.875f, 1.0f);
+
 	double time = glfwGetTime();
 	double oldTime = time;
 	int fps = 0, fps_counter = 0;

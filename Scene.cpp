@@ -210,19 +210,24 @@ void Scene::draw()
 {
 	matManager->updateShaders(cameras[activeCamera]);
 
-	unsigned int nPointLights = 0;
-	unsigned int nDirLights = 0;
 
 	// Calculate shadows
 	for (unsigned int i = 0; i < lights.size(); i++)
 		if (lights[i]->castsShadows()) lights[i]->drawShadows(this, matManager->getShader("depthShader"));
 
 	for (std::map<std::string, Shader *>::iterator it = matManager->getShaders()->begin(); it != matManager->getShaders()->end(); it++) {
-		for (unsigned int i = 0; i < lights.size(); i++) {
-			lights[i]->configureShader((*it).second, i);
+		unsigned int nPointLights = 0;
+		unsigned int nDirLights = 0;
+		for (Light * l : lights) {
 
-			if (dynamic_cast<PointLight*>(lights[i])) nPointLights++;
-			else if (dynamic_cast<DirectionalLight*>(lights[i])) nDirLights++;
+			if (dynamic_cast<PointLight*>(l)) {
+				l->configureShader((*it).second, nPointLights);
+				nPointLights++;
+			}
+			else if (dynamic_cast<DirectionalLight*>(l)) {
+				l->configureShader((*it).second, nDirLights);
+				nDirLights++;
+			}
 		}
 		(*it).second->setInt("nPointLights", nPointLights);
 		(*it).second->setInt("nDirLights", nDirLights);
