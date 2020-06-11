@@ -251,14 +251,26 @@ void Material::prepare(Shader * shader)
 
 	// Set up texture samplers
 	glActiveTexture(GL_TEXTURE0);
-	if (texAmbient) glBindTexture(GL_TEXTURE_2D, texAmbient);
-	else glBindTexture(GL_TEXTURE_2D, defaultTex);
+	if (texAmbient) {
+		glBindTexture(GL_TEXTURE_2D, texAmbient);
+	}
+	else {
+		glBindTexture(GL_TEXTURE_2D, defaultTex);
+	}
 	glActiveTexture(GL_TEXTURE1);
-	if (texDiffuse) glBindTexture(GL_TEXTURE_2D, texDiffuse);
-	else glBindTexture(GL_TEXTURE_2D, defaultTex);
+	if (texDiffuse) {
+		glBindTexture(GL_TEXTURE_2D, texDiffuse);
+	}
+	else {
+		glBindTexture(GL_TEXTURE_2D, defaultTex);
+	}
 	glActiveTexture(GL_TEXTURE2);
-	if (texSpecular) glBindTexture(GL_TEXTURE_2D, texSpecular);
-	else glBindTexture(GL_TEXTURE_2D, defaultTex);
+	if (texSpecular) {
+		glBindTexture(GL_TEXTURE_2D, texSpecular);
+	}
+	else {
+		glBindTexture(GL_TEXTURE_2D, defaultTex);
+	}
 }
 
 void Material::setColorAmbient(glm::fvec3 color)

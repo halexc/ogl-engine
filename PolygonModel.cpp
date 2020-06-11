@@ -150,6 +150,21 @@ void PolygonModel::draw(Shader * s)
 	glBindVertexArray(0);
 }
 
+void PolygonModel::drawRaw()
+{
+	if (!valid) {
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		//Array buffer for all vertices:
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+		valid = true;
+	}
+
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
 bool PolygonModel::castsShadows()
 {
 	return shadows;

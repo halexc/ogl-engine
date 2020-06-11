@@ -2,7 +2,7 @@
 
 #define MAX_NUM_POINT_LIGHTS 16
 #define MAX_NUM_DIR_LIGHTS 4
-#define NUM_SHADOWMAP_LAYERS 3
+#define NUM_SHADOWMAP_LAYERS 1
 
 struct Material {
 	vec3 ambientColor;
@@ -33,8 +33,12 @@ struct DirectionalLight {
 	float intensity;
 	float ambientIntensity;
 	
-	mat4 lightSpace[NUM_SHADOWMAP_LAYERS];
-	sampler2D shadowMap[NUM_SHADOWMAP_LAYERS];
+	#if NUM_SHADOWMAP_LAYERS > 1
+		mat4 lightSpace[NUM_SHADOWMAP_LAYERS];
+	#else
+		mat4 lightSpace;
+	#endif
+	sampler2DArray shadowMap;
 };
 
 struct Flashlight {
@@ -51,7 +55,7 @@ in vec3 FragmentPos;
 in vec3 Normal;
 in vec2 TexCoord;
 in vec4 Color;
-in vec4 FragPosDirLS[MAX_NUM_DIR_LIGHTS];
+in vec4 FragPosDirLS[MAX_NUM_DIR_LIGHTS * NUM_SHADOWMAP_LAYERS];
 
 uniform vec3 cameraPos;
 
@@ -67,20 +71,21 @@ uniform DirectionalLight dLight[MAX_NUM_DIR_LIGHTS];
 vec3 calcDirectionalLight(int i, vec3 normal, vec3 fragmentPos, vec3 viewDirection, vec2 texCoord);
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragmentPos, vec3 viewDirection, vec2 texCoord);
 vec3 quantify(vec3 color, int q);
-float shadowDir(vec4 fragPosLS, DirectionalLight light);
+float shadow(vec4 fragPosLS, DirectionalLight light);
 
 void main()
 {
 	vec3 viewDir = normalize(cameraPos - FragmentPos);
 	vec3 result = vec3(0.0f, 0.0f, 0.0f);
 
-	for(int i = 0; i < nPointLights; i++) 
-		result += calcPointLight(pLight[i], Normal, FragmentPos, viewDir, TexCoord); 
+	//for(int i = 0; i < nPointLights; i++) 
+	//	result += calcPointLight(pLight[i], Normal, FragmentPos, viewDir, TexCoord); 
 		
 	for(int i = 0; i < nDirLights; i++)
 		result += calcDirectionalLight(i, Normal, FragmentPos, viewDir, TexCoord);
 		
 	FragColor = vec4(result, 1.0f);
+	//FragColor = vec4(texture(mat.texAmbient, TexCoord).xyz * mat.specularColor, 1.0f);
 }
 vec3 calcDirectionalLight(int i, vec3 normal, vec3 fragmentPos, vec3 viewDirection, vec2 texCoord)
 {
@@ -99,11 +104,8 @@ vec3 calcDirectionalLight(int i, vec3 normal, vec3 fragmentPos, vec3 viewDirecti
 	vec3 specular = spec * (texture(mat.texSpecular, texCoord).xyz * mat.specularColor * dLight[i].color);
 	
 	// Return sum:
-	vec4 FragPosInMaps[NUM_SHADOWMAP_LAYERS];
-	for(int j = 0; j < NUM_SHADOWMAP_LAYERS; j++){
-		FragPosInMaps[j] = FragPosDirLS[NUM_SHADOWMAP_LAYERS * i + j];
-	}
-	return (ambient + ( 1.0f - shadowDir(FragPosInMaps, dLight[i]) ) * (diffuse + specular));
+	float s = shadow(FragPosDirLS[i], dLight[i]);
+	return (ambient + ( 1.0f - s ) * (diffuse + specular));
 }
 
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragmentPos, vec3 viewDirection, vec2 texCoord)
@@ -136,35 +138,33 @@ vec3 quantify(vec3 color, int q)
 	return color;
 }
 
-float shadowDir(vec4 fragPosLS[NUM_SHADOWMAP_LAYERS], DirectionalLight light)
+float shadow(vec4 fragPosLS, DirectionalLight light)
 {
-	float eps = 0.000001;
-	vec3 projCoords;
-	int map = 0;
-	for(map = 0; map < NUM_SHADOWMAP_LAYERS; map++){
-		projCoords = fragPosLS.xyz / fragPosLS.w;
-		if(projCoords.x > -1 && projCoords.y > -1 && projCoords.x < 1 && projCoords.y < 1)
-			break;
-	}
+	float eps = 0.0005f;
+
+	vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
+	
+	if(abs(projCoords.x) > 1 || abs(projCoords.y) > 1 || abs(projCoords.z) > 1)
+	return 0.0f;
+
 	projCoords = projCoords * 0.5 + 0.5;
-	float closestDepth = texture(light.shadowMap[map], projCoords.xy).r;  
+	float closestDepth = texture(light.shadowMap, vec3(projCoords.xy, 0)).r;  
 	float currentDepth = projCoords.z;
 	
-	float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(light.shadowMap[map], 0);
+	float shadow = 0.0f;
+    vec2 texelSize = 1.0 / textureSize(light.shadowMap, 0).xy;
+
+	int vals = 0;
     for(int x = -1; x <= 1; ++x)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(light.shadowMap[map], projCoords.xy + vec2(x, y) * texelSize).r; 
-			if(x == 0 && y == 0) pcfDepth *= 3.0f;
-            shadow += currentDepth - eps > pcfDepth  ? 1.0 : 0.0;        
+            float pcfDepth = texture(light.shadowMap, vec3(projCoords.xy + vec2(x * texelSize.x, y * texelSize.y), 0)).r; 
+            shadow += currentDepth - eps > pcfDepth ? 1.0 : 0.0;
+			vals++;
         }    
     }
-    shadow /= 12.0f;
-	
-	if(projCoords.z > 1.0)
-        shadow = 0.0;
+    shadow /= vals;
 	
 	return shadow;
 }

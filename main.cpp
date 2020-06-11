@@ -26,7 +26,7 @@ int windowWidth = 1280, windowHeight = 720;
 double delta;
 bool running = true;
 bool debugGrid = false;
-bool debugDepth = false;
+int debugDepth = NUM_SHADOW_LAYERS;
 
 bool cameraInit = false;
 
@@ -203,7 +203,7 @@ int main(void) {
 	scene->getMaterialManager()->addShader("depthDebug", shaderDebug);
 
 	DirectionalLight * dl = new DirectionalLight(4096U, 4096U);
-	dl->setDirection(-1.7f, -2.5f, -1.7f);
+	dl->setDirection(-1.75f, -2.5f, -1.75f);
 	dl->setIntensity(2.0f);
 	dl->setAmbientIntensity(0.25f);
 	dl->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
@@ -288,9 +288,16 @@ int main(void) {
 			drawGrid(scene->getMaterialManager()->getShader("gridShader"));
 
 		}
-		if (debugDepth) {
+
+		if (debugDepth < NUM_SHADOW_LAYERS) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			quad->getComponent<PolygonModel>()->draw();
+			quad->getComponent<PolygonModel>()->getMaterial()->getShader()->use();
+			quad->getComponent<PolygonModel>()->getMaterial()->getShader()->setInt("depthMaps", 0);
+			glActiveTexture(GL_TEXTURE0); 
+			glBindTexture(GL_TEXTURE_2D_ARRAY, quad->getComponent<PolygonModel>()->getMaterial()->getTexAmbient());
+			quad->getComponent<PolygonModel>()->getMaterial()->getShader()->setInt("layer", debugDepth);
+			quad->getComponent<PolygonModel>()->drawRaw();
+			glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 		}
 
 
@@ -353,7 +360,9 @@ void inputHandling() {
 		debugGrid = !debugGrid;
 	}
 	if (inputHandler->getKeyState(GLFW_KEY_F2) & INPUT_PRESSED) {
-		debugDepth = !debugDepth;
+		debugDepth++;
+		debugDepth = debugDepth % (NUM_SHADOW_LAYERS + 1);
+		std::cout << "Depth level: " << debugDepth << std::endl;
 	}
 
 	if (inputHandler->getKeyState(GLFW_KEY_1) & INPUT_PRESSED) {

@@ -4,8 +4,10 @@
 MaterialManager::MaterialManager()
 {
 	//Create a default shader to use whenever no shader is available
-	addShader("default", new Shader("Shader\\basicShader.vs", "Shader\\basicShader.fs"));
-	addShader("depthShader", new Shader("Shader\\depthShader.vs", "Shader\\depthShader.fs"));
+	addShader("default", new Shader("Shader\\phongShader_LayeredShadows.vs", "Shader\\phongShader_LayeredShadows.fs"));
+	//addShader("default", new Shader("Shader\\basicShader.vs", "Shader\\basicShader.fs"));
+	//addShader("depthShader", new Shader("Shader\\depthShader_multilevel.vs", "Shader\\depthShader_multilevel.fs", "Shader\\depthShader_multilevel.gs"));
+	addShader("depthShader", new Shader("Shader\\depthShader_multilevel.vs", "Shader\\depthShader_multilevel.fs"));
 
 	//Create a default material to use when no other material is specified
 	Material * defaultMat = new Material();

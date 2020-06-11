@@ -133,7 +133,7 @@ vec3 quantify(vec3 color, int q)
 
 float shadow(vec4 fragPosLS, DirectionalLight light)
 {
-	float eps = 0.0000;
+	float eps = 0.000001;
 
 	vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
 	projCoords = projCoords * 0.5 + 0.5;
@@ -147,11 +147,10 @@ float shadow(vec4 fragPosLS, DirectionalLight light)
         for(int y = -1; y <= 1; ++y)
         {
             float pcfDepth = texture(light.shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-			if(x == 0 && y == 0) pcfDepth *= 7.0f;
             shadow += currentDepth - eps > pcfDepth  ? 1.0 : 0.0;        
         }    
     }
-    shadow /= 16.0f;
+    shadow /= 9.0f;
 	
 	if(projCoords.z > 1.0)
         shadow = 0.0;

@@ -40,6 +40,7 @@ public:
 	virtual void draw();
 	virtual void draw(Material * mat);
 	virtual void draw(Shader * s);
+	virtual void drawRaw();
 
 	bool castsShadows();
 	bool castsShadows(bool castShadow);

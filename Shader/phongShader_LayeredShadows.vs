@@ -6,10 +6,9 @@ layout (location = 3) in vec4 InColor;
 layout (location = 4) in vec3 InTangent;
 layout (location = 5) in vec3 InBitangent;
 
-
 #define MAX_NUM_POINT_LIGHTS 16
 #define MAX_NUM_DIR_LIGHTS 4
-#define NUM_SHADOWMAP_LAYERS 3
+#define NUM_SHADOWMAP_LAYERS 1
 
 struct PointLight {
 	vec3 pos;
@@ -23,8 +22,12 @@ struct DirectionalLight {
 	float intensity;
 	float ambientIntensity;
 	
-	mat4 lightSpace[NUM_SHADOWMAP_LAYERS];
-	sampler2D shadowMap[NUM_SHADOWMAP_LAYERS];
+	#if NUM_SHADOWMAP_LAYERS > 1
+		mat4 lightSpace[NUM_SHADOWMAP_LAYERS];
+	#else
+		mat4 lightSpace;
+	#endif
+	sampler2DArray shadowMap;
 };
 
 struct Flashlight {
@@ -39,7 +42,7 @@ out vec3 FragmentPos;
 out vec3 Normal;
 out vec4 Color;
 out vec2 TexCoord;
-out vec4 FragPosDirLS[MAX_NUM_DIR_LIGHTS];
+out vec4 FragPosDirLS[MAX_NUM_DIR_LIGHTS * NUM_SHADOWMAP_LAYERS];
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -57,9 +60,18 @@ void main()
 	Normal = mat3(transpose(inverse(model))) * InNormal;
 	FragmentPos = vec3(model * vec4(InPos, 1.0f));
 	Color = InColor;
-	
+
 	for(int i = 0; i < nDirLights; i++)
+	{
+		#if NUM_SHADOWMAP_LAYERS > 1
+		for(int j = 0; j < NUM_SHADOWMAP_LAYERS; j++)
+		{
+			FragPosDirLS[NUM_SHADOWMAP_LAYERS * i + j] = dLight[i].lightSpace[j] * vec4(FragmentPos, 1.0f);
+		}
+		#else
 		FragPosDirLS[i] = dLight[i].lightSpace * vec4(FragmentPos, 1.0f);
-	
-	gl_Position = projection * view * model * vec4(InPos, 1.0f);
+		#endif
+	}
+
+	gl_Position = projection * view * vec4(FragmentPos, 1.0f);
 }
