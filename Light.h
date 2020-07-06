@@ -6,7 +6,7 @@
 #define MAX_NUM_POINT_LIGHTS 16
 #define MAX_NUM_DIR_LIGHTS 4
 
-#define NUM_SHADOW_LAYERS 1
+#define NUM_SHADOW_LAYERS 3
 
 class Scene;
 
@@ -37,12 +37,11 @@ protected:
 	GLuint FBO = 0;
 	GLuint texFBO = 0;
 	
-	bool generateShadowTexArray(unsigned int width, unsigned int height);
-	void drawShadowMapDirectional(Scene * scene, Shader * depthShader, glm::fmat4 projection, int layer);
-
 	glm::fvec3 color;
 	float intensity;
 	unsigned int shadowWidth, shadowHeight;
+
+	
 
 };
 
@@ -63,6 +62,9 @@ public:
 
 protected:
 	glm::fvec3 position;
+
+	bool generateShadowCubemapArray(unsigned int width, unsigned int height);
+	glm::fmat4 lightSpace[6];
 };
 
 // Light that is not emitted from a point but rather illuminates the scene from a certain direction
@@ -87,7 +89,11 @@ protected:
 	glm::fvec3 direction;
 	float ambientIntesity = 0.2f;
 
+	bool generateShadowTexArray(unsigned int width, unsigned int height);
+
 	glm::fmat4 lightSpace[NUM_SHADOW_LAYERS];
+
+	void drawShadowMap(Scene * scene, Shader * depthShader);
 };
 
 // Directional Light, but with attenuation

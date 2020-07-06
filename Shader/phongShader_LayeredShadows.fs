@@ -2,7 +2,7 @@
 
 #define MAX_NUM_POINT_LIGHTS 16
 #define MAX_NUM_DIR_LIGHTS 4
-#define NUM_SHADOWMAP_LAYERS 1
+#define NUM_SHADOWMAP_LAYERS 3
 
 struct Material {
 	vec3 ambientColor;
@@ -71,7 +71,11 @@ uniform DirectionalLight dLight[MAX_NUM_DIR_LIGHTS];
 vec3 calcDirectionalLight(int i, vec3 normal, vec3 fragmentPos, vec3 viewDirection, vec2 texCoord);
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragmentPos, vec3 viewDirection, vec2 texCoord);
 vec3 quantify(vec3 color, int q);
+#if NUM_SHADOWMAP_LAYERS > 1
+float shadow(vec4 fragPosLS[NUM_SHADOWMAP_LAYERS], DirectionalLight light);
+#else
 float shadow(vec4 fragPosLS, DirectionalLight light);
+#endif
 
 void main()
 {
@@ -104,7 +108,16 @@ vec3 calcDirectionalLight(int i, vec3 normal, vec3 fragmentPos, vec3 viewDirecti
 	vec3 specular = spec * (texture(mat.texSpecular, texCoord).xyz * mat.specularColor * dLight[i].color);
 	
 	// Return sum:
+	
+	#if NUM_SHADOWMAP_LAYERS > 1
+	vec4 fragPositionsLS[NUM_SHADOWMAP_LAYERS];
+	for(int k = 0; k < NUM_SHADOWMAP_LAYERS; k++){
+		fragPositionsLS[k] = FragPosDirLS[i * NUM_SHADOWMAP_LAYERS + k];
+	}
+	float s = shadow(fragPositionsLS, dLight[i]);
+	#else
 	float s = shadow(FragPosDirLS[i], dLight[i]);
+	#endif
 	return (ambient + ( 1.0f - s ) * (diffuse + specular));
 }
 
@@ -138,17 +151,36 @@ vec3 quantify(vec3 color, int q)
 	return color;
 }
 
+#if NUM_SHADOWMAP_LAYERS > 1
+float shadow(vec4 fragPosLS[NUM_SHADOWMAP_LAYERS], DirectionalLight light)
+#else
 float shadow(vec4 fragPosLS, DirectionalLight light)
+#endif
 {
-	float eps = 0.0005f;
+	float eps = 0.000125f;
+	int layer;
+	#if NUM_SHADOWMAP_LAYERS > 1
+	vec3 projCoords;
+	for(int i = 0; i < NUM_SHADOWMAP_LAYERS; i++){
+		projCoords = fragPosLS[i].xyz / fragPosLS[i].w;
+		layer = i;
 
+		if(abs(projCoords.x) <= 1 && abs(projCoords.y) <= 1 && abs(projCoords.z) <= 1)
+			break;
+	}
+	eps *= pow(8, layer) * 0.1;
+	eps = min(eps, 0.125f);
+
+	#else
 	vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
+	layer = 0;
+	#endif
 	
 	if(abs(projCoords.x) > 1 || abs(projCoords.y) > 1 || abs(projCoords.z) > 1)
-	return 0.0f;
+	 return 0.0f;
 
 	projCoords = projCoords * 0.5 + 0.5;
-	float closestDepth = texture(light.shadowMap, vec3(projCoords.xy, 0)).r;  
+	float closestDepth = texture(light.shadowMap, vec3(projCoords.xy, layer)).r;  
 	float currentDepth = projCoords.z;
 	
 	float shadow = 0.0f;
@@ -159,12 +191,12 @@ float shadow(vec4 fragPosLS, DirectionalLight light)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(light.shadowMap, vec3(projCoords.xy + vec2(x * texelSize.x, y * texelSize.y), 0)).r; 
+			float pcfDepth = texture(light.shadowMap, vec3(projCoords.xy + vec2(x * texelSize.x, y * texelSize.y), layer)).r;
             shadow += currentDepth - eps > pcfDepth ? 1.0 : 0.0;
 			vals++;
         }    
     }
     shadow /= vals;
-	
+
 	return shadow;
 }

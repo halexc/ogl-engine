@@ -204,8 +204,8 @@ int main(void) {
 
 	DirectionalLight * dl = new DirectionalLight(4096U, 4096U);
 	dl->setDirection(-1.75f, -2.5f, -1.75f);
-	dl->setIntensity(2.0f);
-	dl->setAmbientIntensity(0.25f);
+	dl->setIntensity(1.5f);
+	dl->setAmbientIntensity(0.5f);
 	dl->setColor(glm::fvec3(1.0f, 1.0f, 1.0f));
 	scene->addLight(dl);
 
