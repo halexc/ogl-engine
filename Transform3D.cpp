@@ -11,11 +11,12 @@ Transform3D::Transform3D()
 Transform3D::~Transform3D()
 {
 	if (parent) {
+		// Remove this Transform3D from the children's list of its parent object
 		std::vector<Transform3D *>::iterator it = std::find(this->parent->children.begin(), this->parent->children.end(), this);
 		this->parent->children.erase(it);
 	}
 	for (Transform3D * tf : children) {
-		tf->setParent(NULL);
+		tf->setParent(NULL, true);
 	}
 
 }
@@ -129,7 +130,7 @@ glm::fvec3 Transform3D::getPosition()
 glm::fvec3 Transform3D::getPositionGlobal()
 {
 	if (parent) {
-		glm::fvec4 globalPos = parent->getTransform() * glm::fvec4(position, 0);
+		glm::fvec4 globalPos = parent->getTransform() * glm::fvec4(position, 1);
 		return glm::fvec3(globalPos.x, globalPos.y, globalPos.z);
 	}
 	return position;
@@ -245,6 +246,16 @@ void Transform3D::setOrientation(glm::fquat orientation)
 	invalidate();
 }
 
+void Transform3D::setOrientation(glm::fvec3 eulerAngle)
+{
+	setOrientation(glm::fquat(eulerAngle));
+}
+
+void Transform3D::setOrientation(float rotX, float rotY, float rotZ)
+{
+	setOrientation(glm::fquat(glm::fvec3(rotX, rotY, rotZ)));
+}
+
 glm::fquat Transform3D::getOrientation()
 {
 	return orientation;
@@ -305,6 +316,13 @@ void Transform3D::setScale(glm::fvec3 scale)
 	invalidate();
 }
 
+void Transform3D::setScale(float x, float y, float z)
+{
+	size.x = x;
+	size.y = y;
+	size.z = z;
+}
+
 glm::fvec3 Transform3D::getScale()
 {
 	return size;
@@ -325,8 +343,9 @@ void Transform3D::invalidate()
 	}
 }
 
-void Transform3D::setParent(Transform3D * parent)
+void Transform3D::setParent(Transform3D * parent, bool keepGlobalTF)
 {
+	glm::fmat4 oldTF = this->getTransform();
 	if (this->parent) {
 		std::vector<Transform3D *>::iterator it = std::find(this->parent->children.begin(), this->parent->children.end(), this);
 		this->parent->children.erase(it);
@@ -334,13 +353,17 @@ void Transform3D::setParent(Transform3D * parent)
 	if(parent) parent->children.push_back(this);
 	this->parent = parent;
 
+	if (keepGlobalTF) {
+		this->setTransformGlobal(oldTF);
+	}
+
 	invalidate();
 }
 
 void Transform3D::validate()
 {
 	// This function is used to not recalculate the transformation matrix with every
-	// transformation, but rather whenever it is necessary.
+	// transformation, but instead only whenever it is necessary.
 	transformation = glm::scale(glm::transpose(glm::fmat4(	1.0f, 0.0f, 0.0f, position.x,
 															0.0f, 1.0f, 0.0f, position.y, 
 															0.0f, 0.0f, 1.0f, position.z, 

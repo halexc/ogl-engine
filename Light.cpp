@@ -260,6 +260,8 @@ void DirectionalLight::configureShader(Shader * s, unsigned int i)
 	s->setFloat(tmp.append(".intensity"), intensity);
 	tmp = pLight;
 	s->setFloat(tmp.append(".ambientIntensity"), ambientIntesity);
+	tmp = pLight;
+	s->setFloat(tmp.append(".index"), i);
 
 	if (castShadows) {
 		for (int j = 0; j < NUM_SHADOW_LAYERS; j++) {

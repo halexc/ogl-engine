@@ -215,6 +215,7 @@ void Scene::draw()
 	for (unsigned int i = 0; i < lights.size(); i++)
 		if (lights[i]->castsShadows()) lights[i]->drawShadows(this, matManager->getShader("depthShader"));
 
+	// Configure all shaders correctly
 	for (std::map<std::string, Shader *>::iterator it = matManager->getShaders()->begin(); it != matManager->getShaders()->end(); it++) {
 		unsigned int nPointLights = 0;
 		unsigned int nDirLights = 0;
@@ -233,6 +234,7 @@ void Scene::draw()
 		(*it).second->setInt("nDirLights", nDirLights);
 	}
 
+	// Finally, draw the entities
 	for (Entity3D * entity : models) {
 		entity->draw();
 	}

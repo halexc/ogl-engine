@@ -77,10 +77,22 @@ void InputHandler::getMousePosition(double & x, double & y)
 	y = this->ypos;
 }
 
+void InputHandler::getMousePosition(double* x, double* y)
+{
+	if (x) *x = this->xpos;
+	if (y) *y = this->ypos;
+}
+
 void InputHandler::getMouseDelta(double & dx, double & dy)
 {
 	dx = this->deltaX;
 	dy = this->deltaY;
+}
+
+void InputHandler::getMouseDelta(double* dx, double* dy)
+{
+	if(dx) *dx = this->deltaX;
+	if(dy) *dy = this->deltaY;
 }
 
 char InputHandler::getKeyState(int key)
@@ -95,7 +107,7 @@ char InputHandler::getMouseButtonState(int mouseButton)
 
 char InputHandler::getModifiers()
 {
-	return 0;
+	return modifier;
 }
 
 bool InputHandler::isShiftDown()
@@ -126,11 +138,6 @@ void InputHandler::setKeyboardCallback(std::function<void(GLFWwindow*, int, int,
 void InputHandler::setMouseCallback(std::function<void(GLFWwindow*, int, int, int)> func)
 {
 	callbackMouse = func;
-}
-
-void InputHandler::setCursorCallback(std::function<void(GLFWwindow*, double, double)> func)
-{
-	callbackCursor = func;
 }
 
 inline void InputHandler::setModifiers(int mods)

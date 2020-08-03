@@ -8,7 +8,7 @@ layout (location = 5) in vec3 InBitangent;
 
 #define MAX_NUM_POINT_LIGHTS 16
 #define MAX_NUM_DIR_LIGHTS 4
-#define NUM_SHADOWMAP_LAYERS 1
+#define NUM_SHADOWMAP_LAYERS 3
 
 struct PointLight {
 	vec3 pos;
@@ -21,6 +21,8 @@ struct DirectionalLight {
 	vec3 color;
 	float intensity;
 	float ambientIntensity;
+
+	int index;
 	
 	#if NUM_SHADOWMAP_LAYERS > 1
 		mat4 lightSpace[NUM_SHADOWMAP_LAYERS];
