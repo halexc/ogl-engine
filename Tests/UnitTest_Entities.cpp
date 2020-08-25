@@ -4,11 +4,14 @@
 #include "..\ogl-engine\Transform3D.h"
 #include "..\ogl-engine\include\glm\glm.hpp"
 #include "..\ogl-engine\include\glm\gtc\matrix_transform.hpp"
+#include "..\ogl-engine\Utils.h"
 
 #include <cmath>
+#include <iostream>
 
 #define PI 3.14159265f
 #define PI_2 PI/2.0f
+#define EULER 2.7182818284590452353602874713527
 #define EPS 0.00001f
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -35,8 +38,35 @@ void assertMatrix4(glm::fmat4 expected, glm::fmat4 actual) {
 			Assert::IsTrue(fabsf(actual[i][j] - expected[i][j]) < EPS);
 }
 
+double simpleODE(double x, double t) {
+
+	return 1 + x;
+}
+
 namespace UnitTestEntities
 {
+	TEST_CLASS(UtilsTest)
+	{
+	public:
+		TEST_METHOD(RungeKutta)
+		{
+			std::function<double(double x, double t)> dxdt = simpleODE;
+			
+
+			double x0 = 0;
+			double t0 = 0;
+			double t_step = 0.125;
+
+			double error = 10 * pow(t_step, 5);
+
+			for (int i = 0; i < 6; i++) {
+				double res = Utils::RungeKutta4<double>(x0, t0, t_step, dxdt);
+				Assert::IsTrue(fabs(res - (pow(EULER, t0 + t_step) - 1)) < error);
+				x0 = res;
+				t0 += t_step;
+			}
+		}
+	};
 	TEST_CLASS(Transform3DTest)
 	{
 	public:
