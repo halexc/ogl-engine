@@ -6,6 +6,7 @@ res/blenderFiles
 x64/
 include/boost/
 .vs/
+include/
 ClothSimulationProject.rc
 ClothSimulationProject.sln
 ClothSimulationProject.vcxproj
